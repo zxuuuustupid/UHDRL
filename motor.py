@@ -139,18 +139,35 @@ def main():
                                                  shuffle=False, rotation=degrees)
         batch_dataloader_1 = tg.get_data_loader(task_1, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
                                                 rotation=degrees)
+
+        #add 1
+        metatrain_character_folders_2 = ['../CWT-1000/motor/train/arch',
+                                         '../CWT-1000/motor/train/anomaly']
+        task_2 = tg.OmniglotTask(metatrain_character_folders_2, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
+        sample_dataloader_2 = tg.get_data_loader(task_2, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
+                                                 shuffle=False, rotation=degrees)
+        batch_dataloader_2 = tg.get_data_loader(task_2, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
+                                                rotation=degrees)
+
         # sample datas
         sample_dataloader_1 = iter(sample_dataloader_1)
         samples_1, sample_labels_1 = next(sample_dataloader_1)
+
+        sample_dataloader_2 = iter(sample_dataloader_2)
+        samples_2, sample_labels_2 = next(sample_dataloader_2)
 
         # print('samples',samples.shape)
         batch_dataloader_1 = iter(batch_dataloader_1)
         batches_1, batch_labels_1 = next(batch_dataloader_1)
 
+        batch_dataloader_2 = iter(batch_dataloader_2)
+        batches_2, batch_labels_2 = next(batch_dataloader_2)
 
         ## 特征提取
-        sample_features_1 = feature_encoder(Variable(samples_1).cuda(GPU))  # 5x64*5*5
-        batch_features_1 = feature_encoder(Variable(batches_1).cuda(GPU))  # 20x64*5*5
+        sample_features_1 = feature_encoder(Variable(samples_1).cuda(GPU))
+        sample_features_2 = feature_encoder(Variable(samples_2).cuda(GPU)) # 5x64*5*5
+        batch_features_1 = feature_encoder(Variable(batches_1).cuda(GPU))
+        batch_features_2 = feature_encoder(Variable(batches_2).cuda(GPU))# 20x64*5*5
         #######################################################################################
 
 
@@ -168,6 +185,19 @@ def main():
         # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
         relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 4, 28 * 28)
 
+        ## 特征拼接
+        # print(sample_features_1.shape)   # 2,128,28,28
+        # print(sample_labels_1.shape)     # 2
+        sample_features_ext_2 = sample_features_2.unsqueeze(0).repeat(BATCH_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+        sample_labels_2 = sample_labels_2.repeat(BATCH_NUM_PER_CLASS)
+        sample_labels_2 = sample_labels_2.long()
+        batch_features_ext_2 = batch_features_2.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+        batch_features_ext_2 = torch.transpose(batch_features_ext_2, 0, 1)
+        # print(batch_features_ext_1.shape)  # 38,2,128,28,28
+        relation_pairs_2 = torch.cat((sample_features_ext_2, batch_features_ext_2), 2)
+        # print(relation_pairs_1.shape)            #38,2,256,28,28
+        # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
+        relation_pairs_2 = relation_pairs_2.view(-1, FEATURE_DIM * 4, 28 * 28)
 
         ##计算关系分数 kan
 
@@ -177,7 +207,12 @@ def main():
         relations_1 = relations_1.view(-1, 8 * 512)
         relations_1 = kan(relations_1)
 
-        relations_1 = relations_1.view(-1, CLASS_NUM)
+        relations_1 = relations_2.view(-1, CLASS_NUM)
+        relations_2 = relation_network(relation_pairs_2)
+        relations_2 = relations_2.view(-1, 8 * 512)
+        relations_2 = kan(relations_2)
+
+        relations_2 = relations_2.view(-1, CLASS_NUM)
         # print(relations_1.shape)
         # print(relations_1.shape)
         ########################################################################################
