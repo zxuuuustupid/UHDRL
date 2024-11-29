@@ -22,6 +22,7 @@ import random
 from src.efficient_kan import KAN
 import CNNEncoder1
 import vit
+from tripletloss.tripletloss import TripletLoss
 
 parser = argparse.ArgumentParser(description="One Shot Visual Recognition")
 parser.add_argument("-f", "--feature_dim", type=int, default=128)
@@ -207,7 +208,8 @@ def main():
         relations_1 = relations_1.view(-1, 8 * 512)
         relations_1 = kan(relations_1)
 
-        relations_1 = relations_2.view(-1, CLASS_NUM)
+        relations_1 = relations_1.view(-1, CLASS_NUM)
+
         relations_2 = relation_network(relation_pairs_2)
         relations_2 = relations_2.view(-1, 8 * 512)
         relations_2 = kan(relations_2)
@@ -234,6 +236,7 @@ def main():
         # relations_3 = relation_network(relation_pairs_3)
         # relations_3 = relations_3.view(-1, CLASS_NUM)
 
+        # triloss=TripletLoss().cuda(GPU)
         mse = nn.MSELoss().cuda(GPU)
         # 计算LOSS
         batch_labels_1 = batch_labels_1.long()
@@ -243,9 +246,9 @@ def main():
                                                                                             batch_labels_1.view(-1, 1),
                                                                                             1).cuda(GPU)
         # print(one_hot_labels_1.shape)
-        # print(relations_1.shape)
+        print(relations_1.shape)
+        # loss_1 = triloss(relations_1, one_hot_labels_1)
         loss_1 = mse(relations_1, one_hot_labels_1)
-
         ########################################################################################
 
 
@@ -499,5 +502,5 @@ if __name__ == '__main__':
     loos_result_1 = main()
     loos_result_1_cpu = [x_1.cpu().detach().numpy() for x_1 in loos_result_1]
 
-    np.savetxt(train_result + 'motor2000_train_loss_1.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
+    # np.savetxt(train_result + 'motor2000_train_loss_1.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
 
