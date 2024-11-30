@@ -161,10 +161,12 @@ def main():
         sample_features_ext_1 = sample_features_1.unsqueeze(0).repeat(BATCH_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
         sample_labels_1 = sample_labels_1.repeat(BATCH_NUM_PER_CLASS)
         sample_labels_1 = sample_labels_1.long()
+        # print(sample_labels_1.shape)
+        # print(sample_features_ext_1.shape)
         batch_features_ext_1 = batch_features_1.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
         batch_features_ext_1 = torch.transpose(batch_features_ext_1, 0, 1)
         # print(batch_features_ext_1.shape)  # 38,2,128,28,28
-        relation_pairs_1 = torch.cat((sample_features_ext_1, batch_features_ext_1), 2)
+        relation_pairs_1 = torch.cat((sample_features_ext_1,  batch_features_ext_1), 2)
         # print(relation_pairs_1.shape)            #38,2,256,28,28
         # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
         relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 4, 28 * 28)
