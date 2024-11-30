@@ -446,6 +446,7 @@ def main():
 
                 an_dist=torch.norm(relations-relations_neg, 2, dim=1).view(-1)
                 ap_dist = torch.norm(relations - relations_pos, 2, dim=1).view(-1)
+                print(test_labels,an_dist,ap_dist,end="")
                 # print(an_dist, '', ap_dist)
                 # print(ap_dist.shape," ",an_dist.shape)
 
@@ -454,15 +455,19 @@ def main():
                 # else:
                 #     print("0", end="")
 
-                print(relations.shape)
-                print(ap_dist.shape)
+                # print(relations.shape)
+                # print(ap_dist.shape)
 
                 # print(relations.shape)
-                for j in range(len(relations)):
-                    if an_dist[j] > ap_dist[j] :
-                        bb[j] = 0
-                    else:
-                        bb[j] = 1
+                # for j in range(len(relations)):
+                if an_dist[0]+an_dist[1] > ap_dist[0]+ap_dist[1] :
+                    bb[0] = 0
+                    bb[1]=1
+                else:
+                    bb[0] = 1
+                    bb[1]=0
+
+                print(bb)
 
                 # for j in range(len(relations)):
                 #     if relations[j][0] > 0.9:
