@@ -147,8 +147,8 @@ def main():
                                                 rotation=degrees)
 
         #add 1
-        metatrain_character_folders_2 = ['../CWT-1000/motor/train/arch0',
-                                         '../CWT-1000/motor/train/arch']
+        metatrain_character_folders_2 = ['../CWT-1000/motor/train/health0',
+                                         '../CWT-1000/motor/train/health']
         task_2 = tg.OmniglotTask(metatrain_character_folders_2, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         sample_dataloader_2 = tg.get_data_loader(task_2, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
                                                  shuffle=False, rotation=degrees)
@@ -297,6 +297,13 @@ def main():
         # loss_1 = mse(relations_1, one_hot_labels_1)
         ########################################################################################
 
+        an_dist = torch.norm(relations_1 - relations_3, 2, dim=1).view(-1)
+        ap_dist = torch.norm(relations_1 - relations_2, 2, dim=1).view(-1)
+
+        # if an_dist[0] > ap_dist[0] and an_dist[1]>ap_dist[1]:
+        #     print("1",end="")
+        # else:
+        #     print("0",end="")
 
         feature_encoder.zero_grad()
         relation_network.zero_grad()
@@ -326,12 +333,12 @@ def main():
             total_rewards_1_1 = 0
             for i in range(TEST_EPISODE):
                 degrees = random.choice([0, 90, 180, 270])
-                metatest_character_folders1 = ['../CWT-1000/motor/test/health0',
-                                               '../CWT-1000/motor/test/anomaly']
+                metatest_character_folders1 = ['../CWT-1000/motor/train/health0',
+                                               '../CWT-1000/motor/train/anomaly']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-                metatrain_character_folders1 = ['../CWT-1000/motor/test/health0',
-                                                '../CWT-1000/motor/test/anomaly']
+                metatrain_character_folders1 = ['../CWT-1000/motor/train/health0',
+                                                '../CWT-1000/motor/train/anomaly']
                 task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                        SAMPLE_NUM_PER_CLASS, )
                 task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -399,12 +406,12 @@ def main():
                 relations1 = kan(relations1)
                 relations_pos = relations1.view(-1, CLASS_NUM)
 
-                metatest_character_folders1 = ['../CWT-1000/motor/test/anomaly0',
-                                               '../CWT-1000/motor/test/anomaly']
+                metatest_character_folders1 = ['../CWT-1000/motor/train/anomaly0',
+                                               '../CWT-1000/motor/train/anomaly']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-                metatrain_character_folders1 = ['../CWT-1000/motor/test/anomaly0',
-                                                '../CWT-1000/motor/test/anomaly']
+                metatrain_character_folders1 = ['../CWT-1000/motor/train/anomaly0',
+                                                '../CWT-1000/motor/train/anomaly']
                 task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                        SAMPLE_NUM_PER_CLASS, )
                 task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -441,6 +448,14 @@ def main():
                 ap_dist = torch.norm(relations - relations_pos, 2, dim=1).view(-1)
                 # print(an_dist, '', ap_dist)
                 # print(ap_dist.shape," ",an_dist.shape)
+
+                # if an_dist[0] > ap_dist[0] and an_dist[1] > ap_dist[1]:
+                #     print("1", end="")
+                # else:
+                #     print("0", end="")
+
+                print(relations.shape)
+                print(ap_dist.shape)
 
                 # print(relations.shape)
                 for j in range(len(relations)):
