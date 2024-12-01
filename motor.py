@@ -91,8 +91,8 @@ def main():
     feature_encoder = CNNEncoder1.rsnet()  # 特征提取
     # relation_network = vit.ViT(image_size=28, patch_size=7, num_classes=2, dim=1024, depth=4, heads=8, mlp_dim=2048,
     #                            dropout=0.1, emb_dropout=0.1)  # 定义关系网络
-    relation_network = KAN([28 * 28, 128, 8])
-    kan = KAN([8 * 512, 512, 32, 2])
+    relation_network = KAN([28 * 28, 128,8])
+    kan = KAN([8 * 512, 512, 128])
     # 关系网络和特征提取模块的加载话
     #    feature_encoder.apply(weights_init)
     #   relation_network.apply(weights_init)
@@ -147,8 +147,8 @@ def main():
                                                 rotation=degrees)
 
         #add 1
-        metatrain_character_folders_2 = ['../CWT-1000/motor/train/health0',
-                                         '../CWT-1000/motor/train/health']
+        metatrain_character_folders_2 = ['../CWT-1000/motor/train/arch0',
+                                         '../CWT-1000/motor/train/arch']
         task_2 = tg.OmniglotTask(metatrain_character_folders_2, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         sample_dataloader_2 = tg.get_data_loader(task_2, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
                                                  shuffle=False, rotation=degrees)
@@ -245,17 +245,17 @@ def main():
         relations_1 = relation_network(relation_pairs_1)
         relations_1 = relations_1.view(-1, 8 * 512)
         relations_1 = kan(relations_1)
-        relations_1 = relations_1.view(-1, CLASS_NUM)
+        relations_1 = relations_1.view(-1, 64*CLASS_NUM)
 
         relations_2 = relation_network(relation_pairs_2)
         relations_2 = relations_2.view(-1, 8 * 512)
         relations_2 = kan(relations_2)
-        relations_2 = relations_2.view(-1, CLASS_NUM)
+        relations_2 = relations_2.view(-1, 64*CLASS_NUM)
 
         relations_3 = relation_network(relation_pairs_3)
         relations_3 = relations_3.view(-1, 8 * 512)
         relations_3 = kan(relations_3)
-        relations_3 = relations_3.view(-1, CLASS_NUM)
+        relations_3 = relations_3.view(-1, 64*CLASS_NUM)
         # print(relations_1.shape)
         # print(relations_1.shape)
         ########################################################################################
@@ -277,7 +277,7 @@ def main():
         # relations_3 = relation_network(relation_pairs_3)
         # relations_3 = relations_3.view(-1, CLASS_NUM)
 
-        triloss=TripletLoss().cuda(GPU)
+        triloss=TripletLoss(margin=0.5).cuda(GPU)
         # mse = nn.MSELoss().cuda(GPU)
         # 计算LOSS
         batch_labels_1 = batch_labels_1.long()
@@ -331,6 +331,8 @@ def main():
 
             print("Testing,motor",end='')
             total_rewards_1_1 = 0
+            total_rewards_h=0
+            total_rewards_f=0
             for i in range(TEST_EPISODE):
                 degrees = random.choice([0, 90, 180, 270])
                 metatest_character_folders1 = ['../CWT-1000/motor/train/health0',
@@ -368,7 +370,7 @@ def main():
                 relations1 = relation_network(relation_pairs)
                 relations1 = relations1.view(2, 8 * 512)
                 relations1 = kan(relations1)
-                relations = relations1.view(-1, CLASS_NUM)
+                relations = relations1.view(-1, 64*CLASS_NUM)
 
                 metatest_character_folders1 = ['../CWT-1000/motor/test/health0',
                                                '../CWT-1000/motor/test/health']
@@ -404,7 +406,7 @@ def main():
                 relations1 = relation_network(relation_pairs)
                 relations1 = relations1.view(2, 8 * 512)
                 relations1 = kan(relations1)
-                relations_pos = relations1.view(-1, CLASS_NUM)
+                relations_pos = relations1.view(-1,64* CLASS_NUM)
 
                 metatest_character_folders1 = ['../CWT-1000/motor/train/anomaly0',
                                                '../CWT-1000/motor/train/anomaly']
@@ -440,13 +442,13 @@ def main():
                 relations1 = relation_network(relation_pairs)
                 relations1 = relations1.view(2, 8 * 512)
                 relations1 = kan(relations1)
-                relations_neg = relations1.view(-1, CLASS_NUM)
+                relations_neg = relations1.view(-1, 64*CLASS_NUM)
 
                 bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
 
                 an_dist=torch.norm(relations-relations_neg, 2, dim=1).view(-1)
                 ap_dist = torch.norm(relations - relations_pos, 2, dim=1).view(-1)
-                print(test_labels,an_dist,ap_dist,end="")
+                # print(an_dist,ap_dist,test_labels,end='')
                 # print(an_dist, '', ap_dist)
                 # print(ap_dist.shape," ",an_dist.shape)
 
@@ -459,15 +461,12 @@ def main():
                 # print(ap_dist.shape)
 
                 # print(relations.shape)
-                # for j in range(len(relations)):
-                if an_dist[0]+an_dist[1] > ap_dist[0]+ap_dist[1] :
-                    bb[0] = 0
-                    bb[1]=1
-                else:
-                    bb[0] = 1
-                    bb[1]=0
-
-                print(bb)
+                for j in range(len(relations)):
+                    if an_dist[j] > ap_dist[j]:
+                        bb[j]=0
+                    else:
+                        bb[j]=1
+                # print(bb)
 
                 # for j in range(len(relations)):
                 #     if relations[j][0] > 0.9:
@@ -483,9 +482,16 @@ def main():
                 # print(test_labels[0])
                 rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
                 total_rewards_1_1 += np.sum(rewards)
+                rewards_h=[1 if predict_labels[j] == test_labels[j] and test_labels[j]==0 else 0 for j in range(CLASS_NUM)]
+                total_rewards_h +=np.sum(rewards_h)
+                rewards_f = [1 if predict_labels[j] == test_labels[j] and test_labels[j] == 1 else 0 for j in
+                             range(CLASS_NUM)]
+                total_rewards_f += np.sum(rewards_f)
             test_accuracy_1_1 = total_rewards_1_1 / 1.0 / CLASS_NUM / TEST_EPISODE
+            health_acc = total_rewards_h / 1.0 / TEST_EPISODE
+            fault_acc = total_rewards_f/ 1.0 / TEST_EPISODE
             accuray_result_1_1.append(test_accuracy_1_1)
-            print(" test accuracy:", test_accuracy_1_1)
+            print(" test accuracy:", test_accuracy_1_1,'health:',health_acc,"fault",fault_acc)
 
         #     print("Testing...1-2,motor type2", end='')
         #     total_rewards_1_2 = 0
