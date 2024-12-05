@@ -155,8 +155,8 @@ def main():
         batch_dataloader_2 = tg.get_data_loader(task_2, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
                                                 rotation=degrees)
 
-        metatrain_character_folders_3 = ['../CWT-1000/motor/train/anomaly0',
-                                         '../CWT-1000/motor/train/anomaly']
+        metatrain_character_folders_3 = ['../CWT-1000/motor/test/anomaly0',
+                                         '../CWT-1000/motor/test/anomaly']
         task_3 = tg.OmniglotTask(metatrain_character_folders_3, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         sample_dataloader_3 = tg.get_data_loader(task_3, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
                                                  shuffle=False, rotation=degrees)
@@ -335,12 +335,12 @@ def main():
             total_rewards_f=0
             for i in range(TEST_EPISODE):
                 degrees = random.choice([0, 90, 180, 270])
-                metatest_character_folders1 = ['../CWT-1000/motor/train/health0',
-                                               '../CWT-1000/motor/train/anomaly']
+                metatest_character_folders1 = ['../CWT-1000/motor/test/health0',
+                                               '../CWT-1000/motor/test/anomaly']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-                metatrain_character_folders1 = ['../CWT-1000/motor/train/health0',
-                                                '../CWT-1000/motor/train/anomaly']
+                metatrain_character_folders1 = ['../CWT-1000/motor/test/health0',
+                                                '../CWT-1000/motor/test/anomaly']
                 task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                        SAMPLE_NUM_PER_CLASS, )
                 task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -408,12 +408,12 @@ def main():
                 relations1 = kan(relations1)
                 relations_pos = relations1.view(-1,64* CLASS_NUM)
 
-                metatest_character_folders1 = ['../CWT-1000/motor/train/anomaly0',
-                                               '../CWT-1000/motor/train/anomaly']
+                metatest_character_folders1 = ['../CWT-1000/motor/test/anomaly0',
+                                               '../CWT-1000/motor/test/anomaly']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-                metatrain_character_folders1 = ['../CWT-1000/motor/train/anomaly0',
-                                                '../CWT-1000/motor/train/anomaly']
+                metatrain_character_folders1 = ['../CWT-1000/motor/test/anomaly0',
+                                                '../CWT-1000/motor/test/anomaly']
                 task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                        SAMPLE_NUM_PER_CLASS, )
                 task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
