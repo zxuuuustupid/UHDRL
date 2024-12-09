@@ -205,7 +205,11 @@ def main():
         batch_features_ext_1 = batch_features_1.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
         batch_features_ext_1 = torch.transpose(batch_features_ext_1, 0, 1)
         # print(batch_features_ext_1.shape)  # 38,2,128,28,28
+
+
         relation_pairs_1 = torch.cat((sample_features_ext_1, batch_features_ext_1), 2)
+
+
         # print(relation_pairs_1.shape)            #38,2,256,28,28
         # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
         relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 4, 28 * 28)
@@ -277,7 +281,7 @@ def main():
         # relations_3 = relation_network(relation_pairs_3)
         # relations_3 = relations_3.view(-1, CLASS_NUM)
 
-        triloss=TripletLoss(margin=0.5).cuda(GPU)
+        triloss=TripletLoss(margin=1).cuda(GPU)
         # mse = nn.MSELoss().cuda(GPU)
         # 计算LOSS
         batch_labels_1 = batch_labels_1.long()
@@ -293,7 +297,8 @@ def main():
 
         # print(one_hot_labels_1)
         # print(relations_1.shape)
-        loss_1 = triloss(relations_2, relations_1,relations_3)
+        # print(batch_features_1.shape,batch_features_2.shape,batch_features_3.shape)
+        loss_1 = triloss(batch_features_2, batch_features_1,batch_features_3)
         # loss_1 = mse(relations_1, one_hot_labels_1)
         ########################################################################################
 
@@ -352,11 +357,11 @@ def main():
                 sample_dataloader = iter(sample_dataloader)
                 sample_images, sample_labels = next(sample_dataloader)
                 test_dataloader = iter(test_dataloader)
-                test_images, test_labels = next(test_dataloader)
+                test_images, test_labels1 = next(test_dataloader)
                 sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                test_features = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                test_features1 = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
                 sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+                test_features_ext = test_features1.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
                 test_features_ext = torch.transpose(test_features_ext, 0, 1)
                 # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
                 # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
@@ -391,9 +396,9 @@ def main():
                 test_dataloader = iter(test_dataloader)
                 test_images, test_labels2 = next(test_dataloader)
                 sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                test_features = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                test_features2 = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
                 sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+                test_features_ext = test_features2.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
                 test_features_ext = torch.transpose(test_features_ext, 0, 1)
                 # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
                 # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
@@ -427,9 +432,9 @@ def main():
                 test_dataloader = iter(test_dataloader)
                 test_images, test_labels2 = next(test_dataloader)
                 sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                test_features = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                test_features3 = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
                 sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+                test_features_ext = test_features3.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
                 test_features_ext = torch.transpose(test_features_ext, 0, 1)
                 # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
                 # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
@@ -446,8 +451,8 @@ def main():
 
                 bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
 
-                an_dist=torch.norm(relations-relations_neg, 2, dim=1).view(-1)
-                ap_dist = torch.norm(relations - relations_pos, 2, dim=1).view(-1)
+                an_dist=torch.norm(test_features1-test_features3, 2, dim=1).view(-1)
+                ap_dist = torch.norm(test_features1 - test_features2, 2, dim=1).view(-1)
                 # print(an_dist,ap_dist,test_labels,end='')
                 # print(an_dist, '', ap_dist)
                 # print(ap_dist.shape," ",an_dist.shape)
@@ -480,18 +485,18 @@ def main():
                 # # print(test_labels[1])
                 # print(predict_labels[0], end='')
                 # print(test_labels[0])
-                rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
+                rewards = [1 if predict_labels[j] == test_labels1[j] else 0 for j in range(CLASS_NUM)]
                 total_rewards_1_1 += np.sum(rewards)
-                rewards_h=[1 if predict_labels[j] == test_labels[j] and test_labels[j]==0 else 0 for j in range(CLASS_NUM)]
-                total_rewards_h +=np.sum(rewards_h)
-                rewards_f = [1 if predict_labels[j] == test_labels[j] and test_labels[j] == 1 else 0 for j in
-                             range(CLASS_NUM)]
-                total_rewards_f += np.sum(rewards_f)
+                # rewards_h=[1 if predict_labels[j] == test_labels1[j] and test_labels[j]==0 else 0 for j in range(CLASS_NUM)]
+                # total_rewards_h +=np.sum(rewards_h)
+                # rewards_f = [1 if predict_labels[j] == test_labels1[j] and test_labels[j] == 1 else 0 for j in
+                #              range(CLASS_NUM)]
+                # total_rewards_f += np.sum(rewards_f)
             test_accuracy_1_1 = total_rewards_1_1 / 1.0 / CLASS_NUM / TEST_EPISODE
             health_acc = total_rewards_h / 1.0 / TEST_EPISODE
             fault_acc = total_rewards_f/ 1.0 / TEST_EPISODE
             accuray_result_1_1.append(test_accuracy_1_1)
-            print(" test accuracy:", test_accuracy_1_1,'health:',health_acc,"fault",fault_acc)
+            print(" test accuracy:", test_accuracy_1_1)
 
         #     print("Testing...1-2,motor type2", end='')
         #     total_rewards_1_2 = 0
