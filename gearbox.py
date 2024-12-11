@@ -146,6 +146,7 @@ def main():
         batch_dataloader_1 = tg.get_data_loader(task_1, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
                                                 rotation=degrees)
         # sample datas
+
         sample_dataloader_1 = iter(sample_dataloader_1)
         samples_1, sample_labels_1 = next(sample_dataloader_1)
 
