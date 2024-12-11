@@ -153,7 +153,11 @@ def main():
         batch_features_ext_1 = batch_features_1.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
         batch_features_ext_1 = torch.transpose(batch_features_ext_1, 0, 1)
         # print(batch_features_ext_1.shape)  # 38,2,128,28,28
+
+
         relation_pairs_1 = torch.cat((sample_features_ext_1, batch_features_ext_1), 2)
+
+
         # print(relation_pairs_1.shape)            #38,2,256,28,28
         # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
         relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 4, 28 * 28)
@@ -162,9 +166,10 @@ def main():
         relations_1 = kan(relations_1)
         relations_1 = relations_1.view(-1, CLASS_NUM)
 
-
         triloss=TripletLoss().cuda(GPU)
         mse = nn.MSELoss().cuda(GPU)
+
+       
         # 计算LOSS
         batch_labels_1 = batch_labels_1.long()
         # print(batches_1.shape)
@@ -175,6 +180,7 @@ def main():
         # print(one_hot_labels_1.shape)
         # print(relations_1.shape)
         loss_1 = mse(relations_1, one_hot_labels_1)
+
 
         ########################################################################################
 
@@ -223,11 +229,11 @@ def main():
                 sample_dataloader = iter(sample_dataloader)
                 sample_images, sample_labels = next(sample_dataloader)
                 test_dataloader = iter(test_dataloader)
-                test_images, test_labels = next(test_dataloader)
+                test_images, test_labels1 = next(test_dataloader)
                 sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                test_features = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                test_features1 = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
                 sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+                test_features_ext = test_features1.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
                 test_features_ext = torch.transpose(test_features_ext, 0, 1)
                 # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
                 # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
@@ -244,6 +250,7 @@ def main():
                 bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
 
                 # print(relations)
+
                 for j in range(len(relations)):
                     if relations[j][0] > 0.9:
                         bb[j] = 0
@@ -272,6 +279,7 @@ def main():
             #     print("save networks for episode:", episode)
             #
             #     last_accuracy = test_accuracy
+
 
     return loos_result_1
 
