@@ -18,11 +18,10 @@ import os
 import math
 import argparse
 import random
-
+from tripletloss.tripletloss import TripletLoss
 from src.efficient_kan import KAN
 import CNNEncoder1
 import vit
-from tripletloss.tripletloss import TripletLoss
 
 parser = argparse.ArgumentParser(description="One Shot Visual Recognition")
 parser.add_argument("-f", "--feature_dim", type=int, default=128)
@@ -91,8 +90,8 @@ def main():
     feature_encoder = CNNEncoder1.rsnet()  # 特征提取
     # relation_network = vit.ViT(image_size=28, patch_size=7, num_classes=2, dim=1024, depth=4, heads=8, mlp_dim=2048,
     #                            dropout=0.1, emb_dropout=0.1)  # 定义关系网络
-    relation_network = KAN([28 * 28, 128,8])
-    kan = KAN([8 * 512, 512, 128])
+    relation_network = KAN([28 * 28, 128, 8])
+    kan = KAN([8 * 512, 512, 32, 2])
     # 关系网络和特征提取模块的加载话
     #    feature_encoder.apply(weights_init)
     #   relation_network.apply(weights_init)
@@ -131,74 +130,23 @@ def main():
         # sample_dataloader is to obtain previous samples for compare
         # batch_dataloader is to batch samples for training
         degrees = random.choice([0, 90, 180, 270])
-
         ##第一个监测点  轴箱motor
-        # metatrain_character_folders_1 = ['../CWT-1000/motor/train/health',
-        #                                  '../CWT-1000/motor/train/anomaly']
-        metatrain_character_folders_1 = ['../CWT-1000/motor/train/health0',
-                                         '../CWT-1000/motor/train/health']
-        # # label = 0 health
-
-        # metatrain_character_folders_1 = '../CWT-1000/motor/train/health'
+        metatrain_character_folders_1 = ['../CWT-1000/motor/train/health',
+                                         '../CWT-1000/motor/train/anomaly']
         task_1 = tg.OmniglotTask(metatrain_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         sample_dataloader_1 = tg.get_data_loader(task_1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
                                                  shuffle=False, rotation=degrees)
         batch_dataloader_1 = tg.get_data_loader(task_1, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
                                                 rotation=degrees)
-
-        #add 1
-        metatrain_character_folders_2 = ['../CWT-1000/motor/train/arch0',
-                                         '../CWT-1000/motor/train/arch']
-        task_2 = tg.OmniglotTask(metatrain_character_folders_2, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
-        sample_dataloader_2 = tg.get_data_loader(task_2, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
-                                                 shuffle=False, rotation=degrees)
-        batch_dataloader_2 = tg.get_data_loader(task_2, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
-                                                rotation=degrees)
-
-        metatrain_character_folders_3 = ['../CWT-1000/motor/test/anomaly0',
-                                         '../CWT-1000/motor/test/anomaly']
-        task_3 = tg.OmniglotTask(metatrain_character_folders_3, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
-        sample_dataloader_3 = tg.get_data_loader(task_3, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
-                                                 shuffle=False, rotation=degrees)
-        batch_dataloader_3 = tg.get_data_loader(task_3, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
-                                                rotation=degrees)
-
-        # sample datas
         sample_dataloader_1 = iter(sample_dataloader_1)
         samples_1, sample_labels_1 = next(sample_dataloader_1)
-
-        sample_dataloader_2 = iter(sample_dataloader_2)
-        samples_2, sample_labels_2 = next(sample_dataloader_2)
-
-        sample_dataloader_3 = iter(sample_dataloader_3)
-        samples_3, sample_labels_3 = next(sample_dataloader_3)
-
         # print('samples',samples.shape)
         batch_dataloader_1 = iter(batch_dataloader_1)
         batches_1, batch_labels_1 = next(batch_dataloader_1)
-
-        batch_dataloader_2 = iter(batch_dataloader_2)
-        batches_2, batch_labels_2 = next(batch_dataloader_2)
-
-        batch_dataloader_3 = iter(batch_dataloader_3)
-        batches_3, batch_labels_3 = next(batch_dataloader_3)
-
         ## 特征提取
-        # print(samples_1)
-        sample_features_1 = feature_encoder(Variable(samples_1).cuda(GPU))
-        sample_features_2 = feature_encoder(Variable(samples_2).cuda(GPU))
-        sample_features_3 = feature_encoder(Variable(samples_3).cuda(GPU))
-        # 5x64*5*5
-        # print(batches_1.shape)
-        batch_features_1 = feature_encoder(Variable(batches_1).cuda(GPU))
-        batch_features_2 = feature_encoder(Variable(batches_2).cuda(GPU))
-        batch_features_3 = feature_encoder(Variable(batches_3).cuda(GPU))# 20x64*5*5
+        sample_features_1 = feature_encoder(Variable(samples_1).cuda(GPU))  # 5x64*5*5
+        batch_features_1 = feature_encoder(Variable(batches_1).cuda(GPU))  # 20x64*5*5
         #######################################################################################
-
-
-        ## 特征拼接
-        # print(sample_features_1.shape)   # 2,128,28,28
-        # print(sample_labels_1.shape)     # 2
         sample_features_ext_1 = sample_features_1.unsqueeze(0).repeat(BATCH_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
         sample_labels_1 = sample_labels_1.repeat(BATCH_NUM_PER_CLASS)
         sample_labels_1 = sample_labels_1.long()
@@ -213,76 +161,15 @@ def main():
         # print(relation_pairs_1.shape)            #38,2,256,28,28
         # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
         relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 4, 28 * 28)
-
-        ## 特征拼接
-        # print(sample_features_1.shape)   # 2,128,28,28
-        # print(sample_labels_1.shape)     # 2
-        sample_features_ext_2 = sample_features_2.unsqueeze(0).repeat(BATCH_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        sample_labels_2 = sample_labels_2.repeat(BATCH_NUM_PER_CLASS)
-        sample_labels_2 = sample_labels_2.long()
-        batch_features_ext_2 = batch_features_2.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        batch_features_ext_2 = torch.transpose(batch_features_ext_2, 0, 1)
-        # print(batch_features_ext_1.shape)  # 38,2,128,28,28
-        relation_pairs_2 = torch.cat((sample_features_ext_2, batch_features_ext_2), 2)
-        # print(relation_pairs_1.shape)            #38,2,256,28,28
-        # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
-        relation_pairs_2 = relation_pairs_2.view(-1, FEATURE_DIM * 4, 28 * 28)
-
-        # print(sample_labels_1.shape)    8
-        # print(sample_features_ext_1.shape)   8 2 128 28 28
-
-        sample_features_ext_3 = sample_features_3.unsqueeze(0).repeat(BATCH_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        sample_labels_3 = sample_labels_3.repeat(BATCH_NUM_PER_CLASS)
-        sample_labels_3 = sample_labels_3.long()
-        batch_features_ext_3 = batch_features_3.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        batch_features_ext_3 = torch.transpose(batch_features_ext_3, 0, 1)
-        # print(batch_features_ext_1.shape)  # 38,2,128,28,28
-        relation_pairs_3 = torch.cat((sample_features_ext_3, batch_features_ext_3), 2)
-        # print(relation_pairs_1.shape)            #38,2,256,28,28
-        # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
-        relation_pairs_3 = relation_pairs_3.view(-1, FEATURE_DIM * 4, 28 * 28)
-
-        ##计算关系分数 kan
-
-        # print(relation_pairs_1.shape)
-
         relations_1 = relation_network(relation_pairs_1)
         relations_1 = relations_1.view(-1, 8 * 512)
         relations_1 = kan(relations_1)
-        relations_1 = relations_1.view(-1, 64*CLASS_NUM)
+        relations_1 = relations_1.view(-1, CLASS_NUM)
 
-        relations_2 = relation_network(relation_pairs_2)
-        relations_2 = relations_2.view(-1, 8 * 512)
-        relations_2 = kan(relations_2)
-        relations_2 = relations_2.view(-1, 64*CLASS_NUM)
+        triloss=TripletLoss().cuda(GPU)
+        mse = nn.MSELoss().cuda(GPU)
 
-        relations_3 = relation_network(relation_pairs_3)
-        relations_3 = relations_3.view(-1, 8 * 512)
-        relations_3 = kan(relations_3)
-        relations_3 = relations_3.view(-1, 64*CLASS_NUM)
-        # print(relations_1.shape)
-        # print(relations_1.shape)
-        ########################################################################################
-
-        # ##计算关系分数 kan
-
-        # # print(relation_pairs_1.shape)
-        # relations_1 = relation_network(relation_pairs_1)
-        # # print(relations_1.shape)
-        # relations_1 = relations_1.view(38, 8 * 512)
-        # relations_1 = kan(relations_1)
-        # relations_1 = relations_1.view(-1, CLASS_NUM)
-        # print(relations_1.shape)
-        # print(relations_1.shape)
-        # ########################################################################################
-        # relations_2 = relation_network(relation_pairs_2)
-        # relations_2 = relations_2.view(-1, CLASS_NUM)
-        # ########################################################################################
-        # relations_3 = relation_network(relation_pairs_3)
-        # relations_3 = relations_3.view(-1, CLASS_NUM)
-
-        triloss=TripletLoss(margin=1).cuda(GPU)
-        # mse = nn.MSELoss().cuda(GPU)
+       
         # 计算LOSS
         batch_labels_1 = batch_labels_1.long()
         # print(batches_1.shape)
@@ -290,25 +177,12 @@ def main():
         one_hot_labels_1 = torch.zeros(BATCH_NUM_PER_CLASS * CLASS_NUM, CLASS_NUM).scatter_(1,
                                                                                             batch_labels_1.view(-1, 1),
                                                                                             1).cuda(GPU)
-        # one_hot_labels_1.zero_()
-        # one_hot_labels_1[:, 0] = 1
-        # print('start')
-        # print(relations_1,relations_2,relations_3)
-
-        # print(one_hot_labels_1)
+        # print(one_hot_labels_1.shape)
         # print(relations_1.shape)
-        # print(batch_features_1.shape,batch_features_2.shape,batch_features_3.shape)
-        loss_1 = triloss(batch_features_2, batch_features_1,batch_features_3)
-        # loss_1 = mse(relations_1, one_hot_labels_1)
+        loss_1 = mse(relations_1, one_hot_labels_1)
+
+
         ########################################################################################
-
-        an_dist = torch.norm(relations_1 - relations_3, 2, dim=1).view(-1)
-        ap_dist = torch.norm(relations_1 - relations_2, 2, dim=1).view(-1)
-
-        # if an_dist[0] > ap_dist[0] and an_dist[1]>ap_dist[1]:
-        #     print("1",end="")
-        # else:
-        #     print("0",end="")
 
         feature_encoder.zero_grad()
         relation_network.zero_grad()
@@ -334,18 +208,16 @@ def main():
         if (episode + 1) % 100 == 0:
             # test
 
-            print("Testing,motor",end='')
+            print("Testing...1,motor type1",end='')
             total_rewards_1_1 = 0
-            total_rewards_h=0
-            total_rewards_f=0
             for i in range(TEST_EPISODE):
                 degrees = random.choice([0, 90, 180, 270])
-                metatest_character_folders1 = ['../CWT-1000/motor/test/health0',
-                                               '../CWT-1000/motor/test/anomaly']
+                metatest_character_folders1 = ['../CWT-1000/motor/test/M1/health',
+                                               '../CWT-1000/motor/test/M1/anomaly/']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
                 # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-                metatrain_character_folders1 = ['../CWT-1000/motor/test/health0',
-                                                '../CWT-1000/motor/test/anomaly']
+                metatrain_character_folders1 = ['../CWT-1000/motor/train/health',
+                                                '../CWT-1000/motor/train/anomaly']
                 task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                        SAMPLE_NUM_PER_CLASS, )
                 task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -370,287 +242,44 @@ def main():
                 relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
                                                                                              FEATURE_DIM * 4, 28 * 28)
 
-
                 # transformer
                 relations1 = relation_network(relation_pairs)
                 relations1 = relations1.view(2, 8 * 512)
                 relations1 = kan(relations1)
-                relations = relations1.view(-1, 64*CLASS_NUM)
-
-                metatest_character_folders1 = ['../CWT-1000/motor/test/health0',
-                                               '../CWT-1000/motor/test/health']
-                # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
-                # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-                metatrain_character_folders1 = ['../CWT-1000/motor/test/health0',
-                                                '../CWT-1000/motor/test/health']
-                task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-                                       SAMPLE_NUM_PER_CLASS, )
-                task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-                                        BATCH_NUM_PER_CLASS)
-                sample_dataloader = tg.get_data_loader(task1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
-                                                       shuffle=False, rotation=degrees)
-                test_dataloader = tg.get_data_loader(task, num_per_class=SAMPLE_NUM_PER_CLASS, split="test",
-                                                     shuffle=True, rotation=degrees)
-                sample_dataloader = iter(sample_dataloader)
-                sample_images, sample_labels = next(sample_dataloader)
-                test_dataloader = iter(test_dataloader)
-                test_images, test_labels2 = next(test_dataloader)
-                sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                test_features2 = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
-                sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = test_features2.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = torch.transpose(test_features_ext, 0, 1)
-                # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
-                # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
-                #                                                                              28)
-                #
-                relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
-                                                                                             FEATURE_DIM * 4, 28 * 28)
-
-                # transformer
-                relations1 = relation_network(relation_pairs)
-                relations1 = relations1.view(2, 8 * 512)
-                relations1 = kan(relations1)
-                relations_pos = relations1.view(-1,64* CLASS_NUM)
-
-                metatest_character_folders1 = ['../CWT-1000/motor/test/anomaly0',
-                                               '../CWT-1000/motor/test/anomaly']
-                # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
-                # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-                metatrain_character_folders1 = ['../CWT-1000/motor/test/anomaly0',
-                                                '../CWT-1000/motor/test/anomaly']
-                task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-                                       SAMPLE_NUM_PER_CLASS, )
-                task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-                                        BATCH_NUM_PER_CLASS)
-                sample_dataloader = tg.get_data_loader(task1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
-                                                       shuffle=False, rotation=degrees)
-                test_dataloader = tg.get_data_loader(task, num_per_class=SAMPLE_NUM_PER_CLASS, split="test",
-                                                     shuffle=True, rotation=degrees)
-                sample_dataloader = iter(sample_dataloader)
-                sample_images, sample_labels = next(sample_dataloader)
-                test_dataloader = iter(test_dataloader)
-                test_images, test_labels2 = next(test_dataloader)
-                sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                test_features3 = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
-                sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = test_features3.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = torch.transpose(test_features_ext, 0, 1)
-                # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
-                # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
-                #                                                                              28)
-                #
-                relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
-                                                                                             FEATURE_DIM * 4, 28 * 28)
-
-                # transformer
-                relations1 = relation_network(relation_pairs)
-                relations1 = relations1.view(2, 8 * 512)
-                relations1 = kan(relations1)
-                relations_neg = relations1.view(-1, 64*CLASS_NUM)
-
+                relations = relations1.view(-1, CLASS_NUM)
                 bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
 
-                an_dist=torch.norm(test_features1-test_features3, 2, dim=1).view(-1)
-                ap_dist = torch.norm(test_features1 - test_features2, 2, dim=1).view(-1)
-                # print(an_dist,ap_dist,test_labels,end='')
-                # print(an_dist, '', ap_dist)
-                # print(ap_dist.shape," ",an_dist.shape)
+                # print(relations)
 
-                # if an_dist[0] > ap_dist[0] and an_dist[1] > ap_dist[1]:
-                #     print("1", end="")
-                # else:
-                #     print("0", end="")
-
-                # print(relations.shape)
-                # print(ap_dist.shape)
-
-                # print(relations.shape)
                 for j in range(len(relations)):
-                    if an_dist[j] > ap_dist[j]:
-                        bb[j]=0
+                    if relations[j][0] > 0.9:
+                        bb[j] = 0
                     else:
-                        bb[j]=1
-                # print(bb)
-
-                # for j in range(len(relations)):
-                #     if relations[j][0] > 0.9:
-                #         bb[j] = 1
-                #     else:
-                #         bb[j] = 0
-
+                        bb[j] = 1
                 # _,predict_labels = torch.max(relations.data,1)
                 predict_labels = bb.cpu()
-                # print(predict_labels.shape)
-                # # print(test_labels[1])
-                # print(predict_labels[0], end='')
-                # print(test_labels[0])
-                rewards = [1 if predict_labels[j] == test_labels1[j] else 0 for j in range(CLASS_NUM)]
+                rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
                 total_rewards_1_1 += np.sum(rewards)
-                # rewards_h=[1 if predict_labels[j] == test_labels1[j] and test_labels[j]==0 else 0 for j in range(CLASS_NUM)]
-                # total_rewards_h +=np.sum(rewards_h)
-                # rewards_f = [1 if predict_labels[j] == test_labels1[j] and test_labels[j] == 1 else 0 for j in
-                #              range(CLASS_NUM)]
-                # total_rewards_f += np.sum(rewards_f)
-            test_accuracy_1_1 = total_rewards_1_1 / 1.0 / CLASS_NUM / TEST_EPISODE
-            health_acc = total_rewards_h / 1.0 / TEST_EPISODE
-            fault_acc = total_rewards_f/ 1.0 / TEST_EPISODE
-            accuray_result_1_1.append(test_accuracy_1_1)
-            print(" test accuracy:", test_accuracy_1_1)
+            test_accuracy = total_rewards_1_1 / 1.0 / CLASS_NUM / TEST_EPISODE
+            accuray_result_1_1.append(test_accuracy)
+            print(" test accuracy 1:", test_accuracy)
 
-        #     print("Testing...1-2,motor type2", end='')
-        #     total_rewards_1_2 = 0
-        #     for i in range(TEST_EPISODE):
-        #         degrees = random.choice([0, 90, 180, 270])
-        #         metatest_character_folders1 = ['../CWT-1000/motor/test/health',
-        #                                        '../CWT-1000/motor/test/anomaly/anomalyTYPE2']
-        #         # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
-        #         # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-        #         metatrain_character_folders1 = ['../CWT-1000/motor/train/health',
-        #                                         '../CWT-1000/motor/train/anomaly']
-        #         task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-        #                                SAMPLE_NUM_PER_CLASS, )
-        #         task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-        #                                 BATCH_NUM_PER_CLASS)
-        #         sample_dataloader = tg.get_data_loader(task1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
-        #                                                shuffle=False, rotation=degrees)
-        #         test_dataloader = tg.get_data_loader(task, num_per_class=SAMPLE_NUM_PER_CLASS, split="test",
-        #                                              shuffle=True, rotation=degrees)
-        #         sample_dataloader = iter(sample_dataloader)
-        #         sample_images, sample_labels = next(sample_dataloader)
-        #         test_dataloader = iter(test_dataloader)
-        #         test_images, test_labels = next(test_dataloader)
-        #         sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-        #         test_features = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
-        #         sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        #         test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        #         test_features_ext = torch.transpose(test_features_ext, 0, 1)
-        #         # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
-        #         # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
-        #         #                                                                              28)
-        #         #
-        #         relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
-        #                                                                                      FEATURE_DIM * 4, 28 * 28)
-        #         ##kan
-        #         # relations1 = relation_network(relation_pairs)
-        #         # # print(relations1.shape)
-        #         # relations1 = relations1.view(2, 8 * 512)
-        #         # relations1 = kan(relations1)
-        #         # relations = relations1.view(-1, CLASS_NUM)
-        #         #
-        #         # # relations1 = relation_network(relation_pairs)
-        #         # # relations = relations1.view(-1, CLASS_NUM)
-        #         # bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
-        #
-        #         # transformer
-        #         relations1 = relation_network(relation_pairs)
-        #         relations1 = relations1.view(2, 8 * 512)
-        #         relations1 = kan(relations1)
-        #         relations = relations1.view(-1, CLASS_NUM)
-        #         bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
-        #
-        #         # print(relations)
-        #         for j in range(len(relations)):
-        #             if relations[j][0] > 0.9:
-        #                 bb[j] = 0
-        #             else:
-        #                 bb[j] = 1
-        #         # _,predict_labels = torch.max(relations.data,1)
-        #         predict_labels = bb.cpu()
-        #         rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
-        #         total_rewards_1_2 += np.sum(rewards)
-        #     test_accuracy_1_2 = total_rewards_1_2 / 1.0 / CLASS_NUM / TEST_EPISODE
-        #     accuray_result_1_2.append(test_accuracy_1_2)
-        #     print(" test accuracy 1-2:", test_accuracy_1_2)
-        #
-        #     print("Testing...1-3,motor type3", end='')
-        #     total_rewards_1_3 = 0
-        #     for i in range(TEST_EPISODE):
-        #         degrees = random.choice([0, 90, 180, 270])
-        #         metatest_character_folders1 = ['../CWT-1000/motor/test/health',
-        #                                        '../CWT-1000/motor/test/anomaly/anomalyTYPE3']
-        #         # '../CWT-1000/motor/test/anomaly/anomalyTYPE13']
-        #         # '../CWT-1000/motor/test/anomaly/anomalyTYPE14']
-        #         metatrain_character_folders1 = ['../CWT-1000/motor/train/health',
-        #                                         '../CWT-1000/motor/train/anomaly']
-        #         task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-        #                                SAMPLE_NUM_PER_CLASS, )
-        #         task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-        #                                 BATCH_NUM_PER_CLASS)
-        #         sample_dataloader = tg.get_data_loader(task1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
-        #                                                shuffle=False, rotation=degrees)
-        #         test_dataloader = tg.get_data_loader(task, num_per_class=SAMPLE_NUM_PER_CLASS, split="test",
-        #                                              shuffle=True, rotation=degrees)
-        #         sample_dataloader = iter(sample_dataloader)
-        #         sample_images, sample_labels = next(sample_dataloader)
-        #         test_dataloader = iter(test_dataloader)
-        #         test_images, test_labels = next(test_dataloader)
-        #         sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-        #         test_features = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
-        #         sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        #         test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-        #         test_features_ext = torch.transpose(test_features_ext, 0, 1)
-        #         # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
-        #         # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
-        #         #                                                                              28)
-        #         #
-        #         relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
-        #                                                                                      FEATURE_DIM * 4, 28 * 28)
-        #         ##kan
-        #         # relations1 = relation_network(relation_pairs)
-        #         # # print(relations1.shape)
-        #         # relations1 = relations1.view(2, 8 * 512)
-        #         # relations1 = kan(relations1)
-        #         # relations = relations1.view(-1, CLASS_NUM)
-        #         #
-        #         # # relations1 = relation_network(relation_pairs)
-        #         # # relations = relations1.view(-1, CLASS_NUM)
-        #         # bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
-        #
-        #         # transformer
-        #         relations1 = relation_network(relation_pairs)
-        #         relations1 = relations1.view(2, 8 * 512)
-        #         relations1 = kan(relations1)
-        #         relations = relations1.view(-1, CLASS_NUM)
-        #         bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
-        #
-        #         # print(relations)
-        #         for j in range(len(relations)):
-        #             if relations[j][0] > 0.9:
-        #                 bb[j] = 0
-        #             else:
-        #                 bb[j] = 1
-        #         # _,predict_labels = torch.max(relations.data,1)
-        #         predict_labels = bb.cpu()
-        #         rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
-        #         total_rewards_1_3 += np.sum(rewards)
-        #     test_accuracy_1_3 = total_rewards_1_3 / 1.0 / CLASS_NUM / TEST_EPISODE
-        #     accuray_result_1_3.append(test_accuracy_1_3)
-        #     print(" test accuracy 1-3:", test_accuracy_1_3)
-        #     #############################################################################################################
-        #
-        #
-        #     ###总精度
-        #     test_accuracy = test_accuracy_1_1 + test_accuracy_1_2 + test_accuracy_1_3
-        #
-        #     test_accuracy = test_accuracy / 3.0
-        #     print("TOtal_ accuracy:", test_accuracy)
-        #
-        #     # if test_accuracy >= last_accuracy:
-        #     #     # save networks
-        #     #     torch.save(feature_encoder.state_dict(),
-        #     #                str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-        #     #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-        #     #     torch.save(relation_network.state_dict(),
-        #     #                str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
-        #     #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-        #     #     torch.save(kan.state_dict(),
-        #     #                str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-        #     #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-        #     #
-        #     #     print("save networks for episode:", episode)
-        #     #
-        #     #     last_accuracy = test_accuracy
+            # if test_accuracy >= last_accuracy:
+            #     # save networks
+            #     torch.save(feature_encoder.state_dict(),
+            #                str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+            #     torch.save(relation_network.state_dict(),
+            #                str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+            #     torch.save(kan.state_dict(),
+            #                str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+            #
+            #     print("save networks for episode:", episode)
+            #
+            #     last_accuracy = test_accuracy
+
 
     return loos_result_1
 
