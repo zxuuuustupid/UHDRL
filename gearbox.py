@@ -1,4 +1,3 @@
-
 # --------------
 # --------------------
 # Project: Learning to Compare: Relation Network for Few-Shot Learning
@@ -21,8 +20,11 @@ import argparse
 import random
 
 from src.efficient_kan import KAN
+from src import fullconnect
 import CNNEncoder1
 import vit
+from src.fullconnect import FullyConnectedLayer
+from tripletloss.tripletloss import TripletLoss
 
 parser = argparse.ArgumentParser(description="One Shot Visual Recognition")
 parser.add_argument("-f", "--feature_dim", type=int, default=128)
@@ -93,6 +95,7 @@ def main():
     #                            dropout=0.1, emb_dropout=0.1)  # 定义关系网络
     relation_network = KAN([28 * 28, 128, 8])
     kan = KAN([8 * 512, 512, 32, 2])
+    fc=FullyConnectedLayer()
     # 关系网络和特征提取模块的加载话
     #    feature_encoder.apply(weights_init)
     #   relation_network.apply(weights_init)
@@ -100,6 +103,7 @@ def main():
     feature_encoder.cuda(GPU)
     relation_network.cuda(GPU)
     kan.cuda(GPU)
+    fc.cuda(GPU)
 
     # 优化器的定义
     feature_encoder_optim = torch.optim.Adam(feature_encoder.parameters(), lr=LEARNING_RATE)
@@ -133,8 +137,41 @@ def main():
         degrees = random.choice([0, 90, 180, 270])
 
         #########################################################
-        health_character_folders_1 = ['../CWT-1000/gearbox/train/health',
-                                         '../CWT-1000/gearbox/train/anomaly']
+        health_character_folders_1 = ['../CWT-1000/gearbox/train/triplet/health0',
+                                      '../CWT-1000/gearbox/train/triplet/health']
+        arch_character_folders_1 = ['../CWT-1000/gearbox/train/triplet/arch0',
+                                    '../CWT-1000/gearbox/train/triplet/arch']
+        anomaly_character_folders_1 = ['../CWT-1000/gearbox/train/triplet/anomaly0',
+                                       '../CWT-1000/gearbox/train/triplet/anomaly']
+        task_health = tg.OmniglotTask(health_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
+        batch_dataloader_health = tg.get_data_loader(task_health, num_per_class=BATCH_NUM_PER_CLASS, split="test", shuffle=True,
+                                                rotation=degrees)
+        batch_dataloader_health = iter(batch_dataloader_health)
+        batches_health, batch_labels_health = next(batch_dataloader_health)
+        batch_features_health = feature_encoder(Variable(batches_health).cuda(GPU))
+
+        task_arch = tg.OmniglotTask(arch_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
+        batch_dataloader_arch = tg.get_data_loader(task_arch, num_per_class=BATCH_NUM_PER_CLASS, split="test",
+                                                     shuffle=True,
+                                                     rotation=degrees)
+        batch_dataloader_arch = iter(batch_dataloader_arch)
+        batches_arch, batch_labels_arch = next(batch_dataloader_arch)
+        batch_features_arch = feature_encoder(Variable(batches_arch).cuda(GPU))
+
+        task_anomaly = tg.OmniglotTask(anomaly_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
+        batch_dataloader_anomaly = tg.get_data_loader(task_anomaly, num_per_class=BATCH_NUM_PER_CLASS, split="test",
+                                                     shuffle=True,
+                                                     rotation=degrees)
+        batch_dataloader_anomaly = iter(batch_dataloader_anomaly)
+        batches_anomaly, batch_labels_anomaly = next(batch_dataloader_anomaly)
+        batch_features_anomaly = feature_encoder(Variable(batches_anomaly).cuda(GPU))
+
+        batch_features_arch=fc(batch_features_arch)
+        batch_features_health = fc(batch_features_health)
+        batch_features_anomaly = fc(batch_features_anomaly)
+
+        triloss=TripletLoss(margin=0.1)
+        loss_punish=triloss(batch_features_arch,batch_features_health,batch_features_anomaly)
         #########################################################
 
         ##第一个监测点  轴箱gearbox
@@ -154,12 +191,10 @@ def main():
         batch_dataloader_1 = iter(batch_dataloader_1)
         batches_1, batch_labels_1 = next(batch_dataloader_1)
 
-
         ## 特征提取
         sample_features_1 = feature_encoder(Variable(samples_1).cuda(GPU))  # 5x64*5*5
         batch_features_1 = feature_encoder(Variable(batches_1).cuda(GPU))  # 20x64*5*5
         #######################################################################################
-
 
         ## 特征拼接
         # print(sample_features_1.shape)   # 2,128,28,28
@@ -172,11 +207,10 @@ def main():
         batch_features_ext_1 = batch_features_1.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
         batch_features_ext_1 = torch.transpose(batch_features_ext_1, 0, 1)
         # print(batch_features_ext_1.shape)  # 38,2,128,28,28
-        relation_pairs_1 = torch.cat((sample_features_ext_1,  batch_features_ext_1), 2)
+        relation_pairs_1 = torch.cat((sample_features_ext_1, batch_features_ext_1), 2)
         # print(relation_pairs_1.shape)            #38,2,256,28,28
         # relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 2, 28, 28)
         relation_pairs_1 = relation_pairs_1.view(-1, FEATURE_DIM * 4, 28 * 28)
-
 
         ##计算关系分数 kan
 
@@ -222,11 +256,10 @@ def main():
 
         ########################################################################################
 
-
         feature_encoder.zero_grad()
         relation_network.zero_grad()
 
-        loss = loss_1
+        loss = loss_1+loss_punish
 
         loss.backward()
 
@@ -247,12 +280,12 @@ def main():
         if (episode + 1) % 100 == 0:
             # test
 
-            print("Testing...1-1,gearbox type9",end='')
+            print("Testing...1-1,gearbox type9", end='')
             total_rewards_1_1 = 0
             for i in range(TEST_EPISODE):
                 degrees = random.choice([0, 90, 180, 270])
-                metatest_character_folders1 = ['../CWT-1000/gearbox/test/G3/health',
-                                               '../CWT-1000/gearbox/test/G3/anomaly']
+                metatest_character_folders1 = ['../CWT-1000/gearbox/test/G1/health',
+                                               '../CWT-1000/gearbox/test/G1/anomaly']
                 # '../CWT-1000/gearbox/test/anomaly/anomalyTYPE13']
                 # '../CWT-1000/gearbox/test/anomaly/anomalyTYPE14']
                 metatrain_character_folders1 = ['../CWT-1000/gearbox/train/health',
@@ -475,4 +508,3 @@ if __name__ == '__main__':
     loos_result_1 = main()
     loos_result_1_cpu = [x_1.cpu().detach().numpy() for x_1 in loos_result_1]
     # np.savetxt(train_result + 'gearbox2000_train_loss_1.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
-
