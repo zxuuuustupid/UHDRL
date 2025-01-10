@@ -285,7 +285,7 @@ def main():
             for i in range(TEST_EPISODE):
                 degrees = random.choice([0, 90, 180, 270])
                 metatest_character_folders1 = ['../CWT-1000/gearbox/test/G1/health',
-                                               '../CWT-1000/gearbox/test/G1/anomaly']
+                                               '../CWT-1000/gearbox/test/G1/sample1/anomaly']
                 # '../CWT-1000/gearbox/test/anomaly/anomalyTYPE13']
                 # '../CWT-1000/gearbox/test/anomaly/anomalyTYPE14']
                 metatrain_character_folders1 = ['../CWT-1000/gearbox/train/health',
