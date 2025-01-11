@@ -213,8 +213,10 @@ def main():
             print("Testing", end='')
             total_rewards_1_1 = 0
             for i in range(TEST_EPISODE):
-                num_train_wc=random.randint(1,9)
-                num_train_fault_type=random.randint(1,8)
+                # num_train_wc=random.randint(1,9)
+                num_train_wc = 1
+                # num_train_fault_type=random.randint(1,8)
+                num_train_fault_type =1
                 degrees = random.choice([0, 90, 180, 270])
                 metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
                                                f'../CWT-1000/gearbox/test/G{num_train_fault_type}/anomaly/WC{num_train_wc}']

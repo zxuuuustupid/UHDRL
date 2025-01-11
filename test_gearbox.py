@@ -7,6 +7,7 @@
 # -------------------------------------
 import gc
 
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -207,7 +208,7 @@ def main():
                     relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
                                                                                                  FEATURE_DIM * 4, 28 * 28)
 
-                    # transformer
+
                     relations1 = gearbox_relation_network(relation_pairs)
                     relations1 = relations1.view(2, 8 * 512)
                     relations1 = gearbox_relation_network_2(relations1)
@@ -247,10 +248,15 @@ def main():
 
 if __name__ == '__main__':
     std_data,acc_data,recall_data=main()
-    acc_data_cpu = [x_1.cpu().detach().numpy() for x_1 in acc_data]
-    recall_data_cpu = [x_1.cpu().detach().numpy() for x_1 in recall_data]
-    std_data_cpu = [x_1.cpu().detach().numpy() for x_1 in std_data]
-    np.savetxt(test_result+'gearbox/' + 'gearbox_accuracy.csv', acc_data_cpu, fmt='%.8f', delimiter=',')
-    np.savetxt(test_result + 'gearbox/' + 'gearbox_recall.csv', recall_data_cpu, fmt='%.8f', delimiter=',')
-    np.savetxt(test_result + 'gearbox/' + 'gearbox_std.csv', std_data_cpu, fmt='%.8f', delimiter=',')
+    df_std = pd.DataFrame(std_data)
+    df_acc = pd.DataFrame(acc_data)
+    df_recall = pd.DataFrame(recall_data)
+    # 构建目标文件路径
+    file_path_std = os.path.join('test_result', 'gearbox', 'gearbox_std.csv')
+    file_path_acc = os.path.join('test_result', 'gearbox', 'gearbox_acc.csv')
+    file_path_recall = os.path.join('test_result', 'gearbox', 'gearbox_recall.csv')
+    # 保存为 CSV 文件
+    df_std.to_csv(file_path_std, index=False, header=False)
+    df_acc.to_csv(file_path_acc, index=False, header=False)
+    df_recall.to_csv(file_path_recall, index=False, header=False)
 
