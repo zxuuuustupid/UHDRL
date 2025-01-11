@@ -52,7 +52,7 @@ LEARNING_RATE = args.learning_rate
 GPU = args.gpu
 HIDDEN_UNIT = args.hidden_unit
 
-train_result = './train_result/'
+test_result = './test_result/'
 
 label_list = ['Health', 'anomaly']
 
@@ -82,20 +82,9 @@ def main():
     print("init neural networks")
 
     # 定义化网络
-    feature_encoder = CNNEncoder1.rsnet()  # 特征提取
-    # relation_network = vit.ViT(image_size=28, patch_size=7, num_classes=2, dim=1024, depth=4, heads=8, mlp_dim=2048,
-    #                            dropout=0.1, emb_dropout=0.1)  # 定义关系网络
-    relation_network = KAN([28 * 28, 128, 8])
-    kan = KAN([8 * 512, 512, 32, 2])
-    fc = FullyConnectedLayer()
     # 关系网络和特征提取模块的加载话
     #    feature_encoder.apply(weights_init)
     #   relation_network.apply(weights_init)
-
-    feature_encoder.cuda(GPU)
-    relation_network.cuda(GPU)
-    kan.cuda(GPU)
-    fc.cuda(GPU)
     gearbox_feature_encoder = CNNEncoder1.rsnet()  # 特征提取
     gearbox_relation_network = KAN([28 * 28, 128, 8])  # 定义关系网络
     gearbox_relation_network_2 = KAN([8 * 512, 512, 32, 2])
@@ -185,13 +174,18 @@ def main():
     std_list=[[0] * 9 for _ in range(8)]
     for num_fault_type in range(1,8+1):
         for num_wc in range(1,9+1):
+            total_acc=0
+            total_recall=0
+            acc_for_std_list=[]
             for ten_epoches in range(1,11):
                 total_rewards = 0
+                recall_rewards=0
+                recall_times=0
                 for i in range(TEST_EPISODE):
                     degrees = random.choice([0, 90, 180, 270])
-                    metatest_character_folders1 = ['../CWT-1000/gearbox/train/health/WC1',
-                                                   '../CWT-1000/gearbox/test/G1/anomaly/WC1']
-                    metatrain_character_folders1 = ['../CWT-1000/gearbox/train/health/WC1',
+                    metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
+                                                   f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
+                    metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
                                                     '../CWT-1000/gearbox/train/anomaly']
                     task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                            SAMPLE_NUM_PER_CLASS, )
@@ -205,8 +199,8 @@ def main():
                     sample_images, sample_labels = next(sample_dataloader)
                     test_dataloader = iter(test_dataloader)
                     test_images, test_labels = next(test_dataloader)
-                    sample_features = feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                    test_features = feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                    sample_features = gearbox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
+                    test_features = gearbox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
                     sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
                     test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
                     test_features_ext = torch.transpose(test_features_ext, 0, 1)
@@ -214,9 +208,9 @@ def main():
                                                                                                  FEATURE_DIM * 4, 28 * 28)
 
                     # transformer
-                    relations1 = relation_network(relation_pairs)
+                    relations1 = gearbox_relation_network(relation_pairs)
                     relations1 = relations1.view(2, 8 * 512)
-                    relations1 = kan(relations1)
+                    relations1 = gearbox_relation_network_2(relations1)
                     relations = relations1.view(-1, CLASS_NUM)
                     # print(relations.shape)
                     bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
@@ -231,18 +225,27 @@ def main():
                     rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
                     total_rewards += np.sum(rewards)
                     if test_labels[0] == 1:
+                        recall_times=recall_times+1
                         recall_reward = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
-                        back_acc = np.sum(recall_reward) / 1.0 / CLASS_NUM / SAMPLE_NUM_PER_CLASS
-                        back_accuracies.append(back_acc)
-
-                    total_rewards += np.sum(rewards)
-                    accuracy = np.sum(rewards) / 1.0 / CLASS_NUM / SAMPLE_NUM_PER_CLASS
-                    accuracies.append(accuracy)
-
-
-    return 0
+                        recall_rewards += np.sum(recall_reward)
+                accuracy = total_rewards/ 1.0 / CLASS_NUM / TEST_EPISODE
+                recall=recall_rewards/1.0/CLASS_NUM/recall_times
+                print("accuracy:",accuracy,"    recall:",recall)
+                total_acc=total_acc+accuracy
+                total_recall=total_recall+recall
+                acc_for_std_list.append(accuracy)
+            std_list[num_fault_type-1][num_wc-1]=np.std(acc_for_std_list)
+            accuracy_list[num_fault_type - 1][num_wc - 1]=total_acc/10.0
+            recall_list[num_fault_type - 1][num_wc - 1] = total_recall / 10.0
+    return std_list,accuracy_list,recall_list
 
 
 if __name__ == '__main__':
-    acc = main()
+    std_data,acc_data,recall_data=main()
+    acc_data_cpu = [x_1.cpu().detach().numpy() for x_1 in acc_data]
+    recall_data_cpu = [x_1.cpu().detach().numpy() for x_1 in recall_data]
+    std_data_cpu = [x_1.cpu().detach().numpy() for x_1 in std_data]
+    np.savetxt(test_result+'gearbox/' + 'gearbox_accuracy.csv', acc_data_cpu, fmt='%.8f', delimiter=',')
+    np.savetxt(test_result + 'gearbox/' + 'gearbox_recall.csv', recall_data_cpu, fmt='%.8f', delimiter=',')
+    np.savetxt(test_result + 'gearbox/' + 'gearbox_std.csv', std_data_cpu, fmt='%.8f', delimiter=',')
 
