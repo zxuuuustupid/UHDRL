@@ -230,10 +230,15 @@ def main():
                         recall_rewards += np.sum(recall_reward)
                 accuracy = total_rewards/ 1.0 / CLASS_NUM / TEST_EPISODE
                 recall=recall_rewards/1.0/CLASS_NUM/recall_times
-                print("accuracy:",accuracy,"    recall:",recall)
+
                 total_acc=total_acc+accuracy
                 total_recall=total_recall+recall
                 acc_for_std_list.append(accuracy)
+            print("Fault type:G", str(num_fault_type).ljust(2),
+                  "WC:", str(num_wc).ljust(2),
+                  "   accuracy:", f"{total_acc / 10.0:.4f}".ljust(6),
+                  "recall:", f"{total_recall / 10.0:.4f}".rjust(10))
+
             std_list[num_fault_type-1][num_wc-1]=np.std(acc_for_std_list)
             accuracy_list[num_fault_type - 1][num_wc - 1]=total_acc/10.0
             recall_list[num_fault_type - 1][num_wc - 1] = total_recall / 10.0
