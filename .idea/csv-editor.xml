@@ -3,41 +3,6 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\test_result\boundary_acc_std\gearboxtype10_accuracy_std.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\test_result\boundary_acc_std\gearboxtype9_accuracy_std.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\test_result\boundary_acc_std\leftaxleboxtype13_accuracy_std.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\test_result\boundary_acc_std\leftaxleboxtype14_accuracy_std.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\test_result\boundary_acc_std\leftaxleboxtype15_accuracy_std.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\train_result\gearbox_train_loss.csv">
           <value>
             <Attribute>

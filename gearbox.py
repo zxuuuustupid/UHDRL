@@ -101,6 +101,8 @@ def main():
     feature_encoder_scheduler = StepLR(feature_encoder_optim, step_size=100000, gamma=0.5)
     relation_network_optim = torch.optim.Adam(relation_network.parameters(), lr=LEARNING_RATE)
     relation_network_scheduler = StepLR(relation_network_optim, step_size=100000, gamma=0.5)
+    fc_optim = torch.optim.Adam(fc.parameters(), lr=LEARNING_RATE)
+    fc_scheduler = StepLR(fc_optim, step_size=100000, gamma=0.5)
 
 
     # Step 3: build graph
@@ -110,6 +112,7 @@ def main():
         # print('episode', episode)
         feature_encoder_scheduler.step(episode)
         relation_network_scheduler.step(episode)
+        fc_scheduler.step(episode)
         degrees = random.choice([0, 90, 180, 270])
         #########################################################
         triplet_num=random.randint(1,9)
@@ -193,7 +196,9 @@ def main():
         loss.backward()
         torch.nn.utils.clip_grad_norm(feature_encoder.parameters(), 0.5)
         torch.nn.utils.clip_grad_norm(relation_network.parameters(), 0.5)
+        torch.nn.utils.clip_grad_norm(fc.parameters(), 0.5)
         feature_encoder_optim.step()
+        fc_optim.step()
         relation_network_optim.step()
         loos_result_1.append(loss_1)
         loos_result.append(loss)
@@ -208,11 +213,13 @@ def main():
             print("Testing", end='')
             total_rewards_1_1 = 0
             for i in range(TEST_EPISODE):
+                num_train_wc=random.randint(1,9)
+                num_train_fault_type=random.randint(1,8)
                 degrees = random.choice([0, 90, 180, 270])
-                metatest_character_folders1 = ['../CWT-1000/gearbox/train/health/WC1',
-                                               '../CWT-1000/gearbox/test/G1/anomaly/WC1']
-                metatrain_character_folders1 = ['../CWT-1000/gearbox/train/health/WC1',
-                                                '../CWT-1000/gearbox/train/anomaly']
+                metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
+                                               f'../CWT-1000/gearbox/test/G{num_train_fault_type}/anomaly/WC{num_train_wc}']
+                metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
+                                                f'../CWT-1000/gearbox/train/anomaly']
                 task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                        SAMPLE_NUM_PER_CLASS, )
                 task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
