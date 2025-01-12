@@ -104,90 +104,57 @@ def main():
     motor_feature_encoder.cuda(GPU)
     motor_relation_network.cuda(GPU)
     motor_relation_network_2.cuda(GPU)
-    if os.path.exists(
-            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        gearbox_feature_encoder.load_state_dict(torch.load(
-            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load gearbox feature encoder success")
-    if os.path.exists(
-            str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        gearbox_relation_network.load_state_dict(torch.load(
-            str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load gearbox relation network success")
-    if os.path.exists(
-            str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        gearbox_relation_network_2.load_state_dict(torch.load(
-            str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load gearbox relation network2 success")
-    if os.path.exists(
-            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        leftaxlebox_feature_encoder.load_state_dict(torch.load(
-            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load leftaxlebox feature encoder success")
-    if os.path.exists(
-            str("./models/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        leftaxlebox_relation_network.load_state_dict(torch.load(
-            str("./models/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load leftaxlebox relation network success")
-    if os.path.exists(
-            str("./models/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        leftaxlebox_relation_network_2.load_state_dict(torch.load(
-            str("./models/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load leftaxlebox relation network2 success")
 
-    if os.path.exists(
-            str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        motor_feature_encoder.load_state_dict(torch.load(
-            str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load motor feature encoder success")
-    if os.path.exists(
-            str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        motor_relation_network.load_state_dict(torch.load(
-            str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load motor relation network success")
-    if os.path.exists(
-            str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
-        motor_relation_network_2.load_state_dict(torch.load(
-            str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load motor relation network2 success")
+    def load_model(network, file_prefix):
+        file_path = f"./models/{file_prefix}_{CLASS_NUM}way_{SAMPLE_NUM_PER_CLASS}shot.pkl"
+        if os.path.exists(file_path):
+            network.load_state_dict(torch.load(file_path))
+            print(f"load {file_prefix} success")
+
+    # 定义模型及对应文件前缀
+    models = [
+        (gearbox_feature_encoder, "gearbox_feature_encoder"),
+        (gearbox_relation_network, "gearbox_relation_network"),
+        (gearbox_relation_network_2, "gearbox_relation_network_2"),
+        (leftaxlebox_feature_encoder, "leftaxlebox_feature_encoder"),
+        (leftaxlebox_relation_network, "leftaxlebox_relation_network"),
+        (leftaxlebox_relation_network_2, "leftaxlebox_relation_network_2"),
+        (motor_feature_encoder, "motor_feature_encoder"),
+        (motor_relation_network, "motor_relation_network"),
+        (motor_relation_network_2, "motor_relation_network_2"),
+    ]
+
+    # 加载模型
+    for network, prefix in models:
+        load_model(network, prefix)
 
     # Step 3: build graph
-    accuracy_list=[[0] * 9 for _ in range(8)]
-    recall_list=[[0] * 9 for _ in range(8)]
-    std_list=[[0] * 9 for _ in range(8)]
-    for num_fault_type in range(1,8+1):
-        for num_wc in range(1,9+1):
-            total_acc=0
-            total_recall=0
-            acc_for_std_list=[]
-            for ten_epoches in range(1,11):
+    accuracy_list = [[0] * 9 for _ in range(8)]
+    recall_list = [[0] * 9 for _ in range(8)]
+    std_list = [[0] * 9 for _ in range(8)]
+    for num_fault_type in range(1, 8 + 1):
+        #####################################################
+        if num_fault_type in [6, 7]:
+            continue
+        ######################################################
+        for num_wc in range(1, 9 + 1):
+            total_acc = 0
+            total_recall = 0
+            acc_for_std_list = []
+            for ten_epoches in range(1, 11):
                 total_rewards = 0
-                recall_rewards=0
-                recall_times=0
+                recall_rewards = 0
+                recall_times = 0
                 for i in range(TEST_EPISODE):
                     degrees = random.choice([0, 90, 180, 270])
-                    metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
-                                                   f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
-                    metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
-                                                    '../CWT-1000/gearbox/train/anomaly']
+                    # metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
+                    #                                f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
+                    # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
+                    #                                 '../CWT-1000/gearbox/train/anomaly']
+                    metatest_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc}',
+                                                   f'../CWT3-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
+                    metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc}',
+                                                    '../CWT3-1000/gearbox/train/anomaly']
                     task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                            SAMPLE_NUM_PER_CLASS, )
                     task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -202,12 +169,13 @@ def main():
                     test_images, test_labels = next(test_dataloader)
                     sample_features = gearbox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
                     test_features = gearbox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
-                    sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+                    sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1,
+                                                                              1)
                     test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
                     test_features_ext = torch.transpose(test_features_ext, 0, 1)
                     relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
-                                                                                                 FEATURE_DIM * 4, 28 * 28)
-
+                                                                                                 FEATURE_DIM * 4,
+                                                                                                 28 * 28)
 
                     relations1 = gearbox_relation_network(relation_pairs)
                     relations1 = relations1.view(2, 8 * 512)
@@ -226,28 +194,28 @@ def main():
                     rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
                     total_rewards += np.sum(rewards)
                     if test_labels[0] == 1:
-                        recall_times=recall_times+1
+                        recall_times = recall_times + 1
                         recall_reward = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
                         recall_rewards += np.sum(recall_reward)
-                accuracy = total_rewards/ 1.0 / CLASS_NUM / TEST_EPISODE
-                recall=recall_rewards/1.0/CLASS_NUM/recall_times
+                accuracy = total_rewards / 1.0 / CLASS_NUM / TEST_EPISODE
+                recall = recall_rewards / 1.0 / CLASS_NUM / recall_times
 
-                total_acc=total_acc+accuracy
-                total_recall=total_recall+recall
+                total_acc = total_acc + accuracy
+                total_recall = total_recall + recall
                 acc_for_std_list.append(accuracy)
-            print("Fault type:G", str(num_fault_type).ljust(2),
-                  "WC:", str(num_wc).ljust(2),
-                  "   accuracy:", f"{total_acc / 10.0:.4f}".ljust(6),
-                  "recall:", f"{total_recall / 10.0:.4f}".rjust(10))
+            print("FaultType:G", str(num_fault_type).ljust(2),
+                  "WorkCondition:", str(num_wc).ljust(2),
+                  "   Accuracy:", f"{total_acc / 10.0:.4f}".ljust(6),
+                  "   Recall:", f"{total_recall / 10.0:.4f}".rjust(10))
 
-            std_list[num_fault_type-1][num_wc-1]=np.std(acc_for_std_list)
-            accuracy_list[num_fault_type - 1][num_wc - 1]=total_acc/10.0
+            std_list[num_fault_type - 1][num_wc - 1] = np.std(acc_for_std_list)
+            accuracy_list[num_fault_type - 1][num_wc - 1] = total_acc / 10.0
             recall_list[num_fault_type - 1][num_wc - 1] = total_recall / 10.0
-    return std_list,accuracy_list,recall_list
+    return std_list, accuracy_list, recall_list
 
 
 if __name__ == '__main__':
-    std_data,acc_data,recall_data=main()
+    std_data, acc_data, recall_data = main()
     df_std = pd.DataFrame(std_data)
     df_acc = pd.DataFrame(acc_data)
     df_recall = pd.DataFrame(recall_data)
@@ -259,4 +227,3 @@ if __name__ == '__main__':
     df_std.to_csv(file_path_std, index=False, header=False)
     df_acc.to_csv(file_path_acc, index=False, header=False)
     df_recall.to_csv(file_path_recall, index=False, header=False)
-
