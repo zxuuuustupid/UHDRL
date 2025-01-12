@@ -2,7 +2,7 @@ function [  ] = Untitled2( data,path,lable)
 %UNTITLED6 此处显示有关此函数的摘要
 %   此处显示详细说明
 
-fs=2048; 
+fs=6144   ; 
 %采样频率
 num_samples =1000;
 resampleing = floor(((length(data))-fs)/(num_samples-1))  
