@@ -116,13 +116,17 @@ def main():
         degrees = random.choice([0, 90, 180, 270])
         #########################################################
         triplet_num=random.randint(1,9)
-        health_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
-                                      '../CWT-1000/gearbox/train/health']
-        arch_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
-                                    '../CWT-1000/gearbox/train/health']
-        random_folder = random.choice([f.path for f in os.scandir('../CWT-1000/gearbox/train/anomaly') if f.is_dir()])
+        # health_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
+        #                               '../CWT-1000/gearbox/train/health']
+        health_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
+                                      '../CWT3-1000/gearbox/train/health']
+        # arch_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
+        #                             '../CWT-1000/gearbox/train/health']
+        arch_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
+                                    '../CWT3-1000/gearbox/train/health']
+        random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/gearbox/train/anomaly') if f.is_dir()])
         anomaly_character_folders_1 = [random_folder,
-                                       '../CWT-1000/gearbox/train/anomaly']
+                                       '../CWT3-1000/gearbox/train/anomaly']
         task_health = tg.OmniglotTask(health_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_health = tg.get_data_loader(task_health, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                      shuffle=True, rotation=degrees)
@@ -156,8 +160,10 @@ def main():
 
         ##第一个监测点  轴箱gearbox
         num_wc = random.randint(1, 9)
-        metatrain_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
-                                         '../CWT-1000/gearbox/train/anomaly']
+        metatrain_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc}',
+                                         '../CWT3-1000/gearbox/train/anomaly']
+        # metatrain_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
+        #                                  '../CWT-1000/gearbox/train/anomaly']
         task_1 = tg.OmniglotTask(metatrain_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         sample_dataloader_1 = tg.get_data_loader(task_1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
                                                  shuffle=False, rotation=degrees)
@@ -218,10 +224,14 @@ def main():
                 # num_train_fault_type=random.randint(1,8)
                 num_train_fault_type =1
                 degrees = random.choice([0, 90, 180, 270])
-                metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
-                                               f'../CWT-1000/gearbox/test/G{num_train_fault_type}/anomaly/WC{num_train_wc}']
-                metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
-                                                f'../CWT-1000/gearbox/train/anomaly']
+                metatest_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_train_wc}',
+                                               f'../CWT3-1000/gearbox/test/G{num_train_fault_type}/anomaly/WC{num_train_wc}']
+                metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_train_wc}',
+                                                f'../CWT3-1000/gearbox/train/anomaly']
+                # metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
+                #                                f'../CWT-1000/gearbox/test/G{num_train_fault_type}/anomaly/WC{num_train_wc}']
+                # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
+                #                                 f'../CWT-1000/gearbox/train/anomaly']
                 task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                        SAMPLE_NUM_PER_CLASS, )
                 task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
