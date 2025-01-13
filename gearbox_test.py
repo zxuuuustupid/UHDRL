@@ -105,38 +105,76 @@ def main():
     motor_relation_network.cuda(GPU)
     motor_relation_network_2.cuda(GPU)
 
-    def load_model(network, file_prefix):
-        file_path = f"./models/{file_prefix}_{CLASS_NUM}way_{SAMPLE_NUM_PER_CLASS}shot.pkl"
-        if os.path.exists(file_path):
-            network.load_state_dict(torch.load(file_path))
-            print(f"load {file_prefix} success")
+    if os.path.exists(
+            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        gearbox_feature_encoder.load_state_dict(torch.load(
+            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load gearbox feature encoder success")
+    if os.path.exists(
+            str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        gearbox_relation_network.load_state_dict(torch.load(
+            str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load gearbox relation network success")
+    if os.path.exists(
+            str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        gearbox_relation_network_2.load_state_dict(torch.load(
+            str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load gearbox relation network2 success")
+    if os.path.exists(
+            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        leftaxlebox_feature_encoder.load_state_dict(torch.load(
+            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load leftaxlebox feature encoder success")
+    if os.path.exists(
+            str("./models/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        leftaxlebox_relation_network.load_state_dict(torch.load(
+            str("./models/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load leftaxlebox relation network success")
+    if os.path.exists(
+            str("./models/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        leftaxlebox_relation_network_2.load_state_dict(torch.load(
+            str("./models/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load leftaxlebox relation network2 success")
 
-    # 定义模型及对应文件前缀
-    models = [
-        (gearbox_feature_encoder, "gearbox_feature_encoder"),
-        (gearbox_relation_network, "gearbox_relation_network"),
-        (gearbox_relation_network_2, "gearbox_relation_network_2"),
-        (leftaxlebox_feature_encoder, "leftaxlebox_feature_encoder"),
-        (leftaxlebox_relation_network, "leftaxlebox_relation_network"),
-        (leftaxlebox_relation_network_2, "leftaxlebox_relation_network_2"),
-        (motor_feature_encoder, "motor_feature_encoder"),
-        (motor_relation_network, "motor_relation_network"),
-        (motor_relation_network_2, "motor_relation_network_2"),
-    ]
-
-    # 加载模型
-    for network, prefix in models:
-        load_model(network, prefix)
+    if os.path.exists(
+            str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        motor_feature_encoder.load_state_dict(torch.load(
+            str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load motor feature encoder success")
+    if os.path.exists(
+            str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        motor_relation_network.load_state_dict(torch.load(
+            str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load motor relation network success")
+    if os.path.exists(
+            str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
+        motor_relation_network_2.load_state_dict(torch.load(
+            str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
+        print("load motor relation network2 success")
 
     # Step 3: build graph
     accuracy_list = [[0] * 9 for _ in range(8)]
     recall_list = [[0] * 9 for _ in range(8)]
     std_list = [[0] * 9 for _ in range(8)]
     for num_fault_type in range(1, 8 + 1):
-        #####################################################
-        if num_fault_type in [6, 7]:
-            continue
-        ######################################################
         for num_wc in range(1, 9 + 1):
             total_acc = 0
             total_recall = 0
@@ -147,11 +185,11 @@ def main():
                 recall_times = 0
                 for i in range(TEST_EPISODE):
                     degrees = random.choice([0, 90, 180, 270])
-                    # metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
+                    # metatest_character_folders1 = [f'../CWT-1000/gearbox/test/health/WC{num_wc}',
                     #                                f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
                     # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
                     #                                 '../CWT-1000/gearbox/train/anomaly']
-                    metatest_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc}',
+                    metatest_character_folders1 = [f'../CWT3-1000/gearbox/test/health/WC{num_wc}',
                                                    f'../CWT3-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
                     metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc}',
                                                     '../CWT3-1000/gearbox/train/anomaly']
