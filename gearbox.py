@@ -210,13 +210,13 @@ def main():
         loos_result.append(loss)
 
         if (episode + 1) % 50 == 0:
-            print("episode:", episode + 1, "loss", loss.item())
+            print("episode:", episode + 1, "loss", loss.item(), "TripletLoss",loss_punish)
             loos_result.append(loss)
 
         if (episode + 1) % 100 == 0:
             # test
 
-            print("Testing", end='')
+            print("Testing")
             total_rewards_1_1 = 0
             for i in range(TEST_EPISODE):
                 # num_train_wc=random.randint(1,9)
@@ -224,11 +224,11 @@ def main():
                 # num_train_fault_type=random.randint(1,8)
                 num_train_fault_type =1
                 degrees = random.choice([0, 90, 180, 270])
-                metatest_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_train_wc}',
+                metatest_character_folders1 = [f'../CWT3-1000/gearbox/test/health/WC{num_train_wc}',
                                                f'../CWT3-1000/gearbox/test/G{num_train_fault_type}/anomaly/WC{num_train_wc}']
                 metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_train_wc}',
                                                 f'../CWT3-1000/gearbox/train/anomaly']
-                # metatest_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
+                # metatest_character_folders1 = [f'../CWT-1000/gearbox/test/health/WC{num_train_wc}',
                 #                                f'../CWT-1000/gearbox/test/G{num_train_fault_type}/anomaly/WC{num_train_wc}']
                 # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_train_wc}',
                 #                                 f'../CWT-1000/gearbox/train/anomaly']
