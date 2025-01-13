@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\train_result\SWJTU_train_loss.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\train_result\gearbox_train_loss.csv">
           <value>
             <Attribute>
