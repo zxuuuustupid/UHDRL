@@ -82,18 +82,18 @@ def main():
     print("init data folders")
     print("init neural networks")
 
-    # ¶¨Òå»¯ÍøÂç
-    # ¹ØÏµÍøÂçºÍÌØÕ÷ÌáÈ¡Ä£¿éµÄ¼ÓÔØ»°
+    # å®šä¹‰åŒ–ç½‘ç»œ
+    # å…³ç³»ç½‘ç»œå’Œç‰¹å¾æå–æ¨¡å—çš„åŠ è½½è¯
     #    feature_encoder.apply(weights_init)
     #   relation_network.apply(weights_init)
-    gearbox_feature_encoder = CNNEncoder1.rsnet()  # ÌØÕ÷ÌáÈ¡
-    gearbox_relation_network = KAN([28 * 28, 128, 8])  # ¶¨Òå¹ØÏµÍøÂç
+    gearbox_feature_encoder = CNNEncoder1.rsnet()  # ç‰¹å¾æå–
+    gearbox_relation_network = KAN([28 * 28, 128, 8])  # å®šä¹‰å…³ç³»ç½‘ç»œ
     gearbox_relation_network_2 = KAN([8 * 512, 512, 32, 2])
-    motor_feature_encoder = CNNEncoder1.rsnet()  # ÌØÕ÷ÌáÈ¡
-    motor_relation_network = KAN([28 * 28, 128, 8])  # ¶¨Òå¹ØÏµÍøÂç
+    motor_feature_encoder = CNNEncoder1.rsnet()  # ç‰¹å¾æå–
+    motor_relation_network = KAN([28 * 28, 128, 8])  # å®šä¹‰å…³ç³»ç½‘ç»œ
     motor_relation_network_2 = KAN([8 * 512, 512, 32, 2])
-    leftaxlebox_feature_encoder = CNNEncoder1.rsnet()  # ÌØÕ÷ÌáÈ¡
-    leftaxlebox_relation_network = KAN([28 * 28, 128, 8])  # ¶¨Òå¹ØÏµÍøÂç
+    leftaxlebox_feature_encoder = CNNEncoder1.rsnet()  # ç‰¹å¾æå–
+    leftaxlebox_relation_network = KAN([28 * 28, 128, 8])  # å®šä¹‰å…³ç³»ç½‘ç»œ
     leftaxlebox_relation_network_2 = KAN([8 * 512, 512, 32, 2])
     gearbox_feature_encoder.cuda(GPU)
     gearbox_relation_network.cuda(GPU)
@@ -257,11 +257,11 @@ if __name__ == '__main__':
     df_std = pd.DataFrame(std_data)
     df_acc = pd.DataFrame(acc_data)
     df_recall = pd.DataFrame(recall_data)
-    # ¹¹½¨Ä¿±êÎÄ¼şÂ·¾¶
+    # æ„å»ºç›®æ ‡æ–‡ä»¶è·¯å¾„
     file_path_std = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_std.csv')
     file_path_acc = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_acc.csv')
     file_path_recall = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_recall.csv')
-    # ±£´æÎª CSV ÎÄ¼ş
+    # ä¿å­˜ä¸º CSV æ–‡ä»¶
     df_std.to_csv(file_path_std, index=False, header=False)
     df_acc.to_csv(file_path_acc, index=False, header=False)
     df_recall.to_csv(file_path_recall, index=False, header=False)
