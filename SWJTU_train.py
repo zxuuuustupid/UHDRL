@@ -242,9 +242,9 @@ def main():
                         test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1,
                                                                               1)
                         test_features_ext = torch.transpose(test_features_ext, 0, 1)
-                        # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,28
-                        # relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1, FEATURE_DIM * 2, 28,
-                        #                                                                              28)
+                        # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,
+                        # 28 relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
+                        # FEATURE_DIM * 2, 28, 28)
                         #
                         relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
                                                                                                      FEATURE_DIM * 4,
