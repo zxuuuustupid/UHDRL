@@ -115,13 +115,13 @@ def main():
         degrees = random.choice([0, 90, 180, 270])
         #########################################################
         triplet_num = random.randint(1, 5)
-        health_character_folders_1 = [f'../CWT-XJTs/train/health/WC{triplet_num}',
-                                      '../CWT-XJTs/train/health']
-        arch_character_folders_1 = [f'../CWT-XJTs/train/health/WC{triplet_num}',
-                                    '../CWT-XJTs/train/health']
-        random_folder = random.choice([f.path for f in os.scandir('../CWT-XJTs/train/anomaly') if f.is_dir()])
+        health_character_folders_1 = [f'../CWT-XJT/train/health/WC{triplet_num}',
+                                      '../CWT-XJT/train/health']
+        arch_character_folders_1 = [f'../CWT-XJT/train/health/WC{triplet_num}',
+                                    '../CWT-XJT/train/health']
+        random_folder = random.choice([f.path for f in os.scandir('../CWT-XJT/train/anomaly') if f.is_dir()])
         anomaly_character_folders_1 = [random_folder,
-                                       '../CWT-XJTs/train/anomaly']
+                                       '../CWT-XJT/train/anomaly']
         task_health = tg.OmniglotTask(health_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_health = tg.get_data_loader(task_health, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                      shuffle=True, rotation=degrees)
@@ -155,8 +155,8 @@ def main():
 
         ##第一个监测点  轴箱gearbox
         num_wc = random.randint(1, 5)
-        metatrain_character_folders_1 = [f'../CWT-XJTs/train/health/WC{num_wc}',
-                                         '../CWT-XJTs/train/anomaly']
+        metatrain_character_folders_1 = [f'../CWT-XJT/train/health/WC{num_wc}',
+                                         '../CWT-XJT/train/anomaly']
         task_1 = tg.OmniglotTask(metatrain_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         sample_dataloader_1 = tg.get_data_loader(task_1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
                                                  shuffle=False, rotation=degrees)
@@ -206,23 +206,27 @@ def main():
             print("episode:", episode + 1, "loss", loss.item(), "TripletLoss", loss_punish)
             loos_result.append(loss)
 
-        if (episode + 1) % 100 == 0:
+        if (episode + 1) % 50 == 0:
             # test
 
             print("Testing")
-            accuracy29 = 0
+            accuracy22 = 0
             for num_train_wc in range(1, 6):
                 for num_train_fault_type in ['1-InnerScuffing', '2-InnerWear', '3-OuterScuffing', '4-OuterWearing',
-                                             '5-RollerWearing', '6-Cage']:
+                                             '5-RollerWearing']:
                     total_rewards_1_1 = 0
-                    if num_train_fault_type == '6-Cage' and num_train_wc == 5:
+                    if num_train_fault_type == '1-InnerScuffing' and num_train_wc == 5:
+                        continue
+                    if num_train_fault_type == '4-OuterWearing' and num_train_wc == 5:
+                        continue
+                    if num_train_fault_type == '5-RollerWearing' and num_train_wc == 4:
                         continue
                     for i in range(TEST_EPISODE):
                         degrees = random.choice([0, 90, 180, 270])
-                        metatest_character_folders1 = [f'../CWT-XJTs/test/health/WC{num_train_wc}',
-                                                       f'../CWT-XJTs/test/anomaly/{num_train_fault_type}/WC{num_train_wc}']
-                        metatrain_character_folders1 = [f'../CWT-XJTs/train/health/WC{num_train_wc}',
-                                                        f'../CWT-XJTs/train/anomaly']
+                        metatest_character_folders1 = [f'../CWT-XJT/test/health/WC{num_train_wc}',
+                                                       f'../CWT-XJT/test/anomaly/{num_train_fault_type}/WC{num_train_wc}']
+                        metatrain_character_folders1 = [f'../CWT-XJT/train/health/WC{num_train_wc}',
+                                                        f'../CWT-XJT/train/anomaly']
                         task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                                SAMPLE_NUM_PER_CLASS, )
                         task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -242,10 +246,6 @@ def main():
                         test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1,
                                                                               1)
                         test_features_ext = torch.transpose(test_features_ext, 0, 1)
-                        # print(torch.cat((sample_features_ext, test_features_ext), 2).shape)        #2,2,256,28,
-                        # 28 relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
-                        # FEATURE_DIM * 2, 28, 28)
-                        #
                         relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
                                                                                                      FEATURE_DIM * 4,
                                                                                                      28 * 28)
@@ -270,24 +270,23 @@ def main():
                     test_accuracy = total_rewards_1_1 / 1.0 / CLASS_NUM / TEST_EPISODE
                     accuray_result_1_1.append(test_accuracy)
                     # print(test_accuracy)
-                    # print(len(accuray_result_1_1))
-                    accuracy29 = accuracy29 + test_accuracy
-            print(" test accuracy:", accuracy29 / 29.0)
-            if accuracy29 >= last_accuracy:
+                    accuracy22 = accuracy22 + test_accuracy
+            print(" test accuracy:", accuracy22 / 22.0)
+            if accuracy22 >= last_accuracy:
                 # save networks
                 torch.save(feature_encoder.state_dict(),
-                           str("./models_SWJTU-S/feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                           str("./models_SWJTU/feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
                 torch.save(relation_network.state_dict(),
-                           str("./models_SWJTU-S/relation_network_" + str(CLASS_NUM) + "way_" + str(
+                           str("./models_SWJTU/relation_network_" + str(CLASS_NUM) + "way_" + str(
                                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
                 torch.save(kan.state_dict(),
-                           str("./models_SWJTU-S/relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                           str("./models_SWJTU/relation_network_2" + str(CLASS_NUM) + "way_" + str(
                                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
 
                 print("save networks for episode:", episode)
 
-                last_accuracy = accuracy29
+                last_accuracy = accuracy22
 
     return loos_result_1
 
@@ -295,4 +294,4 @@ def main():
 if __name__ == '__main__':
     loos_result_1 = main()
     loos_result_1_cpu = [x_1.cpu().detach().numpy() for x_1 in loos_result_1]
-    np.savetxt(train_result + 'SWJTU-S-S_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
+    np.savetxt(train_result + 'SWJTU_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
