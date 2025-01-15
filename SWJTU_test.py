@@ -89,37 +89,41 @@ def main():
     relation_network_2.cuda(GPU)
 
     if os.path.exists(
-            str("./models_SWJTU-S/feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models_SWJTU/feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         feature_encoder.load_state_dict(torch.load(
-            str("./models_SWJTU-S/feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models_SWJTU/feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load feature encoder success")
     if os.path.exists(
-            str("./models_SWJTU-S/relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models_SWJTU/relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         relation_network.load_state_dict(torch.load(
-            str("./models_SWJTU-S/relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models_SWJTU/relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load relation network success")
     if os.path.exists(
-            str("./models_SWJTU-S/relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models_SWJTU/relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         relation_network_2.load_state_dict(torch.load(
-            str("./models_SWJTU-S/relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models_SWJTU/relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load relation network2 success")
         # Step 3: build graph
-    accuracy_list = [[0] * 5 for _ in range(6)]
-    recall_list = [[0] * 5 for _ in range(6)]
-    std_list = [[0] * 5 for _ in range(6)]
+    accuracy_list = [[0] * 5 for _ in range(5)]
+    recall_list = [[0] * 5 for _ in range(5)]
+    std_list = [[0] * 5 for _ in range(5)]
     for num_fault_type in ['1-InnerScuffing', '2-InnerWear', '3-OuterScuffing', '4-OuterWearing',
-                           '5-RollerWearing', '6-Cage']:
+                           '5-RollerWearing']:
         for num_wc in range(1, 5 + 1):
             total_acc = 0
             total_recall = 0
             acc_for_std_list = []
-            if num_fault_type=='6-Cage' and num_wc==5:
+            if num_fault_type == '1-InnerScuffing' and num_wc == 5:
+                continue
+            if num_fault_type == '4-OuterWearing' and num_wc == 5:
+                continue
+            if num_fault_type == '5-RollerWearing' and num_wc == 4:
                 continue
             for ten_epoches in range(1, 11):
                 total_rewards = 0
@@ -127,10 +131,10 @@ def main():
                 recall_times = 0
                 for i in range(TEST_EPISODE):
                     degrees = random.choice([0, 90, 180, 270])
-                    metatest_character_folders1 = [f'../CWT-XJTs/test/health/WC{num_wc}',
-                                                   f'../CWT-XJTs/test/anomaly/{num_fault_type}/WC{num_wc}']
-                    metatrain_character_folders1 = [f'../CWT-XJTs/train/health/WC{num_wc}',
-                                                    '../CWT-XJTs/train/anomaly']
+                    metatest_character_folders1 = [f'../CWT-XJT/test/health/WC{num_wc}',
+                                                   f'../CWT-XJT/test/anomaly/{num_fault_type}/WC{num_wc}']
+                    metatrain_character_folders1 = [f'../CWT-XJT/train/health/WC{num_wc}',
+                                                    '../CWT-XJT/train/anomaly']
                     task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                            SAMPLE_NUM_PER_CLASS, )
                     task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -196,9 +200,9 @@ if __name__ == '__main__':
     df_acc = pd.DataFrame(acc_data)
     df_recall = pd.DataFrame(recall_data)
     # 构建目标文件路径
-    file_path_std = os.path.join('test_result', 'SWJTU-S', 'std.csv')
-    file_path_acc = os.path.join('test_result', 'SWJTU-S', 'acc.csv')
-    file_path_recall = os.path.join('test_result', 'SWJTU-S', 'recall.csv')
+    file_path_std = os.path.join('test_result', 'SWJTU', 'std.csv')
+    file_path_acc = os.path.join('test_result', 'SWJTU', 'acc.csv')
+    file_path_recall = os.path.join('test_result', 'SWJTU', 'recall.csv')
     # 保存为 CSV 文件
     df_std.to_csv(file_path_std, index=False, header=False)
     df_acc.to_csv(file_path_acc, index=False, header=False)
