@@ -268,7 +268,6 @@ def main():
                         relations = relations1.view(-1, CLASS_NUM)
                         # print(relations.shape)
                         bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
-
                         # print(relations)
                         for j in range(len(relations)):
                             if relations[j][0] > 0.9:
