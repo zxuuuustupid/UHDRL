@@ -121,13 +121,14 @@ def main():
             acc_for_std_list = []
             if (num_fault_type == '1-InnerScuffing' and num_wc == 5) or (
                     num_fault_type == '4-OuterWearing' and num_wc == 5) or (
-                    num_fault_type == '5-RollerWearing' and num_wc == 4) or (num_fault_type == '6-Cage'and num_wc!=5):
+                    num_fault_type == '5-RollerWearing' and num_wc == 4) or (
+                    num_fault_type == '6-Cage' and num_wc != 5):
                 for ten_epoches in range(1, 11):
                     total_rewards = 0
                     recall_rewards = 0
                     recall_times = 0
                     for i in range(TEST_EPISODE):
-                        unwcs=random.randint(1,5)
+                        unwcs = random.randint(1, 5)
                         degrees = random.choice([0, 90, 180, 270])
                         metatest_character_folders1 = [f'../CWT-XJT/test/health/WC{unwcs}',
                                                        f'../CWT-XJT/test/anomaly/{num_fault_type}/WC{num_wc}']
