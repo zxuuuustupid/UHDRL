@@ -105,6 +105,8 @@ def main():
     fc_scheduler = StepLR(fc_optim, step_size=100000, gamma=0.5)
 
 
+
+    # TODO(1.19):add a api to get features
     # Step 3: build graph
     print("Training...")
     last_accuracy = 0
@@ -155,6 +157,12 @@ def main():
         batch_features_anomaly = fc(batch_features_anomaly)
 
         triloss = TripletLoss(margin=0.1)
+        arch128 = [x_1.cpu().detach().numpy() for x_1 in batch_features_arch]
+        health128=[x_2.cpu().detach().numpy() for x_2 in batch_features_health]
+        anomaly128 = [x_3.cpu().detach().numpy() for x_3 in batch_features_anomaly]
+        np.savetxt(train_result + 'gearbox_arch.csv', arch128, fmt='%.8f', delimiter=',')
+        np.savetxt(train_result + 'gearbox_health.csv', health128, fmt='%.8f', delimiter=',')
+        np.savetxt(train_result + 'gearbox_anomaly.csv', anomaly128, fmt='%.8f', delimiter=',')
         loss_punish = triloss(batch_features_arch, batch_features_health, batch_features_anomaly)
         #########################################################
 
@@ -277,21 +285,21 @@ def main():
                     accuray_result_1_1.append(test_accuracy)
                     accuracy72=accuracy72+test_accuracy
             print(" test accuracy:", accuracy72/72.0)
-            if accuracy72 >= last_accuracy:
-                # save networks
-                torch.save(feature_encoder.state_dict(),
-                           str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                torch.save(relation_network.state_dict(),
-                           str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                torch.save(kan.state_dict(),
-                           str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-
-                print("save networks for episode:", episode)
-
-                last_accuracy = accuracy72
+            # if accuracy72 >= last_accuracy:
+            #     # save networks
+            #     torch.save(feature_encoder.state_dict(),
+            #                str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+            #     torch.save(relation_network.state_dict(),
+            #                str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+            #     torch.save(kan.state_dict(),
+            #                str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+            #
+            #     print("save networks for episode:", episode)
+            #
+            #     last_accuracy = accuracy72
 
     return loos_result_1
 
@@ -299,4 +307,4 @@ def main():
 if __name__ == '__main__':
     loos_result_1 = main()
     loos_result_1_cpu = [x_1.cpu().detach().numpy() for x_1 in loos_result_1]
-    np.savetxt(train_result + 'gearbox_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
+    # np.savetxt(train_result + 'gearbox_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
