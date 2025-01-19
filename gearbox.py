@@ -129,7 +129,7 @@ def main():
                                       '../CWT3-1000/gearbox/arch/health']
         # arch_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
         #                             '../CWT-1000/gearbox/train/health']
-        arch_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num+1}',
+        arch_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
                                     '../CWT3-1000/gearbox/arch/health']
         random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/gearbox/arch/anomaly') if f.is_dir()])
         anomaly_character_folders_1 = [random_folder,
@@ -161,12 +161,12 @@ def main():
         batch_features_health = fc(batch_features_health)
         batch_features_anomaly = fc(batch_features_anomaly)
         '''change 0.1 to 1'''
-        triloss = TripletLoss(margin=1)
+        triloss = TripletLoss(margin=0.1)
 
         loss_punish = triloss(batch_features_arch, batch_features_health, batch_features_anomaly)
         """Connect to line 112"""
         if episode>100:
-            if loss_punish==0 and ticks < 12 and triplet_num==1:
+            if loss_punish==0 and ticks < 24 and triplet_num==1:
                 arch128 = [x_1.cpu().detach().numpy() for x_1 in batch_features_arch]
                 health128=[x_2.cpu().detach().numpy() for x_2 in batch_features_health]
                 anomaly128 = [x_3.cpu().detach().numpy() for x_3 in batch_features_anomaly]
@@ -174,7 +174,7 @@ def main():
                 arch128_all.extend(arch128)
                 health128_all.extend(health128)
                 anomaly128_all.extend(anomaly128)
-                if ticks==12:
+                if ticks==24:
                     arch128_all = np.array(arch128_all)
                     health128_all = np.array(health128_all)
                     anomaly128_all = np.array(anomaly128_all)
