@@ -160,8 +160,8 @@ def main():
         batch_features_arch = fc(batch_features_arch)
         batch_features_health = fc(batch_features_health)
         batch_features_anomaly = fc(batch_features_anomaly)
-
-        triloss = TripletLoss(margin=0.1)
+        '''change 0.1 to 1'''
+        triloss = TripletLoss(margin=1)
 
         loss_punish = triloss(batch_features_arch, batch_features_health, batch_features_anomaly)
         """Connect to line 112"""
