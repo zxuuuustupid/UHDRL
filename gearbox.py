@@ -121,18 +121,19 @@ def main():
         fc_scheduler.step(episode)
         degrees = random.choice([0, 90, 180, 270])
         #########################################################
-        triplet_num=random.randint(1,9)
+        # triplet_num=random.randint(1,9)
+        triplet_num=1
         # health_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
         #                               '../CWT-1000/gearbox/train/health']
         health_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
-                                      '../CWT3-1000/gearbox/train/health']
+                                      '../CWT3-1000/gearbox/arch/health']
         # arch_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
         #                             '../CWT-1000/gearbox/train/health']
-        arch_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
-                                    '../CWT3-1000/gearbox/train/health']
-        random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/gearbox/train/anomaly') if f.is_dir()])
+        arch_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num+1}',
+                                    '../CWT3-1000/gearbox/arch/health']
+        random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/gearbox/arch/anomaly') if f.is_dir()])
         anomaly_character_folders_1 = [random_folder,
-                                       '../CWT3-1000/gearbox/train/anomaly']
+                                       '../CWT3-1000/gearbox/arch/anomaly']
         task_health = tg.OmniglotTask(health_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_health = tg.get_data_loader(task_health, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                      shuffle=True, rotation=degrees)
@@ -165,7 +166,7 @@ def main():
         loss_punish = triloss(batch_features_arch, batch_features_health, batch_features_anomaly)
         """Connect to line 112"""
         if episode>100:
-            if loss_punish==0 and ticks < 6 and triplet_num==1:
+            if loss_punish==0 and ticks < 12 and triplet_num==1:
                 arch128 = [x_1.cpu().detach().numpy() for x_1 in batch_features_arch]
                 health128=[x_2.cpu().detach().numpy() for x_2 in batch_features_health]
                 anomaly128 = [x_3.cpu().detach().numpy() for x_3 in batch_features_anomaly]
@@ -173,7 +174,7 @@ def main():
                 arch128_all.extend(arch128)
                 health128_all.extend(health128)
                 anomaly128_all.extend(anomaly128)
-                if ticks==6:
+                if ticks==12:
                     arch128_all = np.array(arch128_all)
                     health128_all = np.array(health128_all)
                     anomaly128_all = np.array(anomaly128_all)

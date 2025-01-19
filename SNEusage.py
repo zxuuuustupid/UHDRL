@@ -13,9 +13,9 @@ X1 = df1.values
 X2 = df2.values
 X3 = df3.values
 
-X_norm1 = SNE.sen_huatu(X1)
-X_norm2 = SNE.sen_huatu(X2)
-X_norm3 = SNE.sen_huatu(X3)
+X_norm1 = SNE.sen_huatu(X1,30)
+X_norm2 = SNE.sen_huatu(X2,30)
+X_norm3 = SNE.sen_huatu(X3,30)
 
 plt.figure(figsize=(10, 6))
 
