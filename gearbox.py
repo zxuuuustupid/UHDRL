@@ -109,6 +109,10 @@ def main():
     # TODO(1.19):add a api to get features
     # Step 3: build graph
     print("Training...")
+    ticks = 1
+    arch128_all=[]
+    health128_all=[]
+    anomaly128_all=[]
     last_accuracy = 0
     for episode in range(EPISODE):
         # print('episode', episode)
@@ -157,13 +161,28 @@ def main():
         batch_features_anomaly = fc(batch_features_anomaly)
 
         triloss = TripletLoss(margin=0.1)
-        arch128 = [x_1.cpu().detach().numpy() for x_1 in batch_features_arch]
-        health128=[x_2.cpu().detach().numpy() for x_2 in batch_features_health]
-        anomaly128 = [x_3.cpu().detach().numpy() for x_3 in batch_features_anomaly]
-        np.savetxt(train_result + 'gearbox_arch.csv', arch128, fmt='%.8f', delimiter=',')
-        np.savetxt(train_result + 'gearbox_health.csv', health128, fmt='%.8f', delimiter=',')
-        np.savetxt(train_result + 'gearbox_anomaly.csv', anomaly128, fmt='%.8f', delimiter=',')
+
         loss_punish = triloss(batch_features_arch, batch_features_health, batch_features_anomaly)
+        """Connect to line 112"""
+        if episode>100:
+            if loss_punish==0 and ticks < 6 and triplet_num==1:
+                arch128 = [x_1.cpu().detach().numpy() for x_1 in batch_features_arch]
+                health128=[x_2.cpu().detach().numpy() for x_2 in batch_features_health]
+                anomaly128 = [x_3.cpu().detach().numpy() for x_3 in batch_features_anomaly]
+                ticks=ticks+1
+                arch128_all.extend(arch128)
+                health128_all.extend(health128)
+                anomaly128_all.extend(anomaly128)
+                if ticks==6:
+                    arch128_all = np.array(arch128_all)
+                    health128_all = np.array(health128_all)
+                    anomaly128_all = np.array(anomaly128_all)
+
+                    # 保存数据到CSV文件
+                    train_result = 'train_result/'  # 假设这是你的保存路径
+                    np.savetxt(train_result +'output_features/'+ 'gearbox_arch.csv', arch128_all, fmt='%.8f', delimiter=',')
+                    np.savetxt(train_result+'output_features/' + 'gearbox_health.csv', health128_all, fmt='%.8f', delimiter=',')
+                    np.savetxt(train_result+'output_features/' + 'gearbox_anomaly.csv', anomaly128_all, fmt='%.8f', delimiter=',')
         #########################################################
 
         ##第一个监测点  轴箱gearbox
