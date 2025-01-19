@@ -12,7 +12,7 @@ from sklearn import manifold, datasets
 
 
 def sen_huatu(X, perplexity=80):
-    tsne = manifold.TSNE(n_components=3, init='pca', n_iter=10000, perplexity=perplexity)
+    tsne = manifold.TSNE(n_components=2, init='pca', n_iter=10000, perplexity=perplexity)
     X_tsne = tsne.fit_transform(X)
     x_min, x_max = X_tsne.min(0), X_tsne.max(0)
     X_norm = (X_tsne - x_min) / (x_max - x_min)  # 归一化

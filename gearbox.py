@@ -105,14 +105,8 @@ def main():
     fc_scheduler = StepLR(fc_optim, step_size=100000, gamma=0.5)
 
 
-
-    # TODO(1.19):add a api to get features
     # Step 3: build graph
     print("Training...")
-    ticks = 1
-    arch128_all=[]
-    health128_all=[]
-    anomaly128_all=[]
     last_accuracy = 0
     for episode in range(EPISODE):
         # print('episode', episode)
@@ -121,19 +115,18 @@ def main():
         fc_scheduler.step(episode)
         degrees = random.choice([0, 90, 180, 270])
         #########################################################
-        # triplet_num=random.randint(1,9)
-        triplet_num=1
+        triplet_num=random.randint(1,9)
         # health_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
         #                               '../CWT-1000/gearbox/train/health']
         health_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
-                                      '../CWT3-1000/gearbox/arch/health']
+                                      '../CWT3-1000/gearbox/train/health']
         # arch_character_folders_1 = [f'../CWT-1000/gearbox/train/health/WC{triplet_num}',
         #                             '../CWT-1000/gearbox/train/health']
         arch_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
-                                    '../CWT3-1000/gearbox/arch/health']
-        random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/gearbox/arch/anomaly') if f.is_dir()])
+                                    '../CWT3-1000/gearbox/train/health']
+        random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/gearbox/train/anomaly') if f.is_dir()])
         anomaly_character_folders_1 = [random_folder,
-                                       '../CWT3-1000/gearbox/arch/anomaly']
+                                       '../CWT3-1000/gearbox/train/anomaly']
         task_health = tg.OmniglotTask(health_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_health = tg.get_data_loader(task_health, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                      shuffle=True, rotation=degrees)
@@ -160,30 +153,9 @@ def main():
         batch_features_arch = fc(batch_features_arch)
         batch_features_health = fc(batch_features_health)
         batch_features_anomaly = fc(batch_features_anomaly)
-        '''change 0.1 to 1'''
+
         triloss = TripletLoss(margin=0.1)
-
         loss_punish = triloss(batch_features_arch, batch_features_health, batch_features_anomaly)
-        """Connect to line 112"""
-        if episode>100:
-            if loss_punish==0 and ticks < 24 and triplet_num==1:
-                arch128 = [x_1.cpu().detach().numpy() for x_1 in batch_features_arch]
-                health128=[x_2.cpu().detach().numpy() for x_2 in batch_features_health]
-                anomaly128 = [x_3.cpu().detach().numpy() for x_3 in batch_features_anomaly]
-                ticks=ticks+1
-                arch128_all.extend(arch128)
-                health128_all.extend(health128)
-                anomaly128_all.extend(anomaly128)
-                if ticks==24:
-                    arch128_all = np.array(arch128_all)
-                    health128_all = np.array(health128_all)
-                    anomaly128_all = np.array(anomaly128_all)
-
-                    # 保存数据到CSV文件
-                    train_result = 'train_result/'  # 假设这是你的保存路径
-                    np.savetxt(train_result +'output_features/'+ 'gearbox_arch.csv', arch128_all, fmt='%.8f', delimiter=',')
-                    np.savetxt(train_result+'output_features/' + 'gearbox_health.csv', health128_all, fmt='%.8f', delimiter=',')
-                    np.savetxt(train_result+'output_features/' + 'gearbox_anomaly.csv', anomaly128_all, fmt='%.8f', delimiter=',')
         #########################################################
 
         ##第一个监测点  轴箱gearbox
@@ -305,21 +277,21 @@ def main():
                     accuray_result_1_1.append(test_accuracy)
                     accuracy72=accuracy72+test_accuracy
             print(" test accuracy:", accuracy72/72.0)
-            # if accuracy72 >= last_accuracy:
-            #     # save networks
-            #     torch.save(feature_encoder.state_dict(),
-            #                str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-            #     torch.save(relation_network.state_dict(),
-            #                str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
-            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-            #     torch.save(kan.state_dict(),
-            #                str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-            #                    SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-            #
-            #     print("save networks for episode:", episode)
-            #
-            #     last_accuracy = accuracy72
+            if accuracy72 >= last_accuracy:
+                # save networks
+                torch.save(feature_encoder.state_dict(),
+                           str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+                torch.save(relation_network.state_dict(),
+                           str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+                torch.save(kan.state_dict(),
+                           str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+
+                print("save networks for episode:", episode)
+
+                last_accuracy = accuracy72
 
     return loos_result_1
 
@@ -327,4 +299,4 @@ def main():
 if __name__ == '__main__':
     loos_result_1 = main()
     loos_result_1_cpu = [x_1.cpu().detach().numpy() for x_1 in loos_result_1]
-    # np.savetxt(train_result + 'gearbox_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
+    np.savetxt(train_result + 'gearbox_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
