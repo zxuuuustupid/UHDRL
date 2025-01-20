@@ -27,16 +27,16 @@ X9 = d8.values
 X10 = d9.values
 
 # 进行t-SNE降维
-X_norm1 = SNE.sen_huatu(X1, 40)
-X_norm2 = SNE.sen_huatu(X2, 40)
-X_norm3 = SNE.sen_huatu(X3, 40)
-X_norm4 = SNE.sen_huatu(X4, 40)
-X_norm5 = SNE.sen_huatu(X5, 40)
-X_norm6 = SNE.sen_huatu(X6, 40)
-X_norm7 = SNE.sen_huatu(X7, 40)
-X_norm8 = SNE.sen_huatu(X8, 40)
-X_norm9 = SNE.sen_huatu(X9, 40)
-X_norm10 = SNE.sen_huatu(X10, 40)
+X_norm1 = SNE.sen_huatu(X1, 25)
+X_norm2 = SNE.sen_huatu(X2, 25)
+X_norm3 = SNE.sen_huatu(X3, 25)
+X_norm4 = SNE.sen_huatu(X4, 25)
+X_norm5 = SNE.sen_huatu(X5, 25)
+X_norm6 = SNE.sen_huatu(X6, 25)
+X_norm7 = SNE.sen_huatu(X7, 25)
+X_norm8 = SNE.sen_huatu(X8, 25)
+X_norm9 = SNE.sen_huatu(X9, 25)
+X_norm10 = SNE.sen_huatu(X10, 25)
 
 # 创建一个空的DataFrame来存储所有降维后的数据
 all_data = pd.DataFrame()
