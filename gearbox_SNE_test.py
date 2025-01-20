@@ -79,12 +79,12 @@ def main():
     feature_encoder.cuda(GPU)
     fc.cuda(GPU)
     if os.path.exists(
-            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         feature_encoder.load_state_dict(torch.load(
-            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
-        print("load gearbox feature encoder success")
+        print("load leftaxlebox feature encoder success")
     print("init data folders")
     fc_optim = torch.optim.Adam(fc.parameters(), lr=LEARNING_RATE)
     fc_scheduler = StepLR(fc_optim, step_size=100000, gamma=0.5)
@@ -112,15 +112,15 @@ def main():
         #########################################################
         triplet_num=1
         '''wc1'''
-        health_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num}',
-                                      '../CWT3-1000/gearbox/arch/health1']
+        health_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC{triplet_num}',
+                                      '../CWT3-1000/leftaxlebox/arch/health1']
         '''wc2'''
-        arch_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC{triplet_num+1}',
-                                    '../CWT3-1000/gearbox/arch/health2']
+        arch_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC{triplet_num+1}',
+                                    '../CWT3-1000/leftaxlebox/arch/health2']
         '''fault'''
-        random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/gearbox/test/G4/anomaly/WC1') if f.is_dir()])
+        random_folder = random.choice([f.path for f in os.scandir('../CWT3-1000/leftaxlebox/test/LA2/anomaly/WC4') if f.is_dir()])
         anomaly_character_folders_1 = [random_folder,
-                                       '../CWT3-1000/gearbox/test/G4/anomaly/WC1']
+                                       '../CWT3-1000/leftaxlebox/test/LA2/anomaly/WC4']
         task_health = tg.OmniglotTask(health_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_health = tg.get_data_loader(task_health, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                      shuffle=True, rotation=degrees)
@@ -144,8 +144,8 @@ def main():
         batches_anomaly, batch_labels_anomaly = next(batch_dataloader_anomaly)
         batch_features_anomaly = feature_encoder(Variable(batches_anomaly).cuda(GPU))
         ''''''
-        health3_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC3',
-                                    '../CWT3-1000/gearbox/arch/health3']
+        health3_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC3',
+                                    '../CWT3-1000/leftaxlebox/arch/health3']
         task_h3 = tg.OmniglotTask(health3_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_h3 = tg.get_data_loader(task_h3, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                    shuffle=True,
@@ -156,8 +156,8 @@ def main():
         batch_features_h3=fc(batch_features_h3)
         ''''''
         ''''''
-        health4_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC4',
-                                    '../CWT3-1000/gearbox/arch/health4']
+        health4_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC4',
+                                    '../CWT3-1000/leftaxlebox/arch/health4']
         task_h4 = tg.OmniglotTask(health4_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_h4 = tg.get_data_loader(task_h4, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                    shuffle=True,
@@ -168,8 +168,8 @@ def main():
         batch_features_h4=fc(batch_features_h4)
         ''''''
         ''''''
-        health5_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC5',
-                                    '../CWT3-1000/gearbox/arch/health5']
+        health5_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC5',
+                                    '../CWT3-1000/leftaxlebox/arch/health5']
         task_h5 = tg.OmniglotTask(health5_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_h5 = tg.get_data_loader(task_h5, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                    shuffle=True,
@@ -180,8 +180,8 @@ def main():
         batch_features_h5=fc(batch_features_h5)
         ''''''
         ''''''
-        health6_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC6',
-                                    '../CWT3-1000/gearbox/arch/health6']
+        health6_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC6',
+                                    '../CWT3-1000/leftaxlebox/arch/health6']
         task_h6 = tg.OmniglotTask(health6_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_h6 = tg.get_data_loader(task_h6, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                    shuffle=True,
@@ -192,8 +192,8 @@ def main():
         batch_features_h6=fc(batch_features_h6)
         ''''''
         ''''''
-        health7_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC7',
-                                    '../CWT3-1000/gearbox/arch/health7']
+        health7_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC7',
+                                    '../CWT3-1000/leftaxlebox/arch/health7']
         task_h7 = tg.OmniglotTask(health7_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_h7 = tg.get_data_loader(task_h7, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                    shuffle=True,
@@ -204,8 +204,8 @@ def main():
         batch_features_h7=fc(batch_features_h7)
         ''''''
         ''''''
-        health8_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC8',
-                                    '../CWT3-1000/gearbox/arch/health8']
+        health8_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC8',
+                                    '../CWT3-1000/leftaxlebox/arch/health8']
         task_h8 = tg.OmniglotTask(health8_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_h8 = tg.get_data_loader(task_h8, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                    shuffle=True,
@@ -216,8 +216,8 @@ def main():
         batch_features_h8=fc(batch_features_h8)
         ''''''
         ''''''
-        health9_character_folders_1 = [f'../CWT3-1000/gearbox/train/health/WC9',
-                                    '../CWT3-1000/gearbox/arch/health9']
+        health9_character_folders_1 = [f'../CWT3-1000/leftaxlebox/train/health/WC9',
+                                    '../CWT3-1000/leftaxlebox/arch/health9']
         task_h9 = tg.OmniglotTask(health9_character_folders_1, CLASS_NUM, SAMPLE_NUM_PER_CLASS, BATCH_NUM_PER_CLASS)
         batch_dataloader_h9 = tg.get_data_loader(task_h9, num_per_class=BATCH_NUM_PER_CLASS, split="test",
                                                    shuffle=True,
@@ -236,6 +236,7 @@ def main():
         triloss = TripletLoss(margin=0.1)
 
         loss_punish = triloss(batch_features_arch, batch_features_health, batch_features_anomaly)
+        print(episode)
         """Connect to line 112"""
         if episode > 1000:
             if loss_punish == 0 and ticks < 24 and triplet_num == 1:
@@ -250,6 +251,7 @@ def main():
                 h8 = [x8.cpu().detach().numpy() for x8 in batch_features_h8]
                 h9 = [x9.cpu().detach().numpy() for x9 in batch_features_h9]
                 ticks = ticks + 1
+                print(ticks)
                 arch128_all.extend(arch128)
                 health128_all.extend(health128)
                 anomaly128_all.extend(anomaly128)
@@ -273,25 +275,25 @@ def main():
                     h9all = np.array(h9all)
                     # 保存数据到CSV文件
                     train_result = 'train_result/'  # 假设这是你的保存路径
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_arch.csv', arch128_all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_arch.csv', arch128_all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health.csv', health128_all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health.csv', health128_all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_anomaly.csv', anomaly128_all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_anomaly.csv', anomaly128_all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health3.csv', h3all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health3.csv', h3all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health4.csv', h4all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health4.csv', h4all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health5.csv', h5all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health5.csv', h5all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health6.csv', h6all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health6.csv', h6all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health7.csv', h7all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health7.csv', h7all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health8.csv', h8all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health8.csv', h8all, fmt='%.8f',
                                delimiter=',')
-                    np.savetxt(train_result + 'output_features/' + 'gearbox_health9.csv', h9all, fmt='%.8f',
+                    np.savetxt(train_result + 'output_features/' + 'leftaxlebox_health9.csv', h9all, fmt='%.8f',
                                delimiter=',')
         #########################################################
 
@@ -307,4 +309,4 @@ def main():
 if __name__ == '__main__':
     loos_result_1 = main()
     loos_result_1_cpu = [x_1.cpu().detach().numpy() for x_1 in loos_result_1]
-    # np.savetxt(train_result + 'gearbox_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
+    # np.savetxt(train_result + 'leftaxlebox_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')
