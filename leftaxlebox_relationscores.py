@@ -20,6 +20,7 @@ import math
 import argparse
 import random
 
+
 from src.efficient_kan import KAN
 from src import fullconnect
 import CNNEncoder1
@@ -171,30 +172,16 @@ def main():
         print("load motor relation network2 success")
 
     # Step 3: build graph
-    accuracy_list = [[0] * 9 for _ in range(8)]
-    recall_list = [[0] * 9 for _ in range(8)]
-    std_list = [[0] * 9 for _ in range(8)]
-    for num_fault_type in range(1, 8 + 1):
-        for num_wc in range(1, 9 + 1):
-            total_acc = 0
-            total_recall = 0
-            acc_for_std_list = []
+    for num_wc in range(1, 9 + 1):
+        relation_score_list = [[] for _ in range(5)]
+        for num_fault_type in range(1, 4 + 1):
             for ten_epoches in range(1, 11):
-
-                total_rewards = 0
-                recall_rewards = 0
-                recall_times = 0
                 for i in range(TEST_EPISODE):
-                    print(i)
                     degrees = random.choice([0, 90, 180, 270])
-                    # metatest_character_folders1 = [f'../CWT-1000/gearbox/test/health/WC{num_wc}',
-                    #                                f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
-                    # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
-                    #                                 '../CWT-1000/gearbox/train/anomaly']
-                    metatest_character_folders1 = [f'../CWT3-1000/gearbox/test/health/WC{num_wc}',
-                                                   f'../CWT3-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
-                    metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc}',
-                                                    '../CWT3-1000/gearbox/train/anomaly']
+                    metatest_character_folders1 = [f'../CWT3-1000/leftaxlebox/test/health/WC{num_wc}',
+                                                   f'../CWT3-1000/leftaxlebox/test/LA{num_fault_type}/anomaly/WC{num_wc}']
+                    metatrain_character_folders1 = [f'../CWT3-1000/leftaxlebox/train/health/WC{num_wc}',
+                                                    '../CWT3-1000/leftaxlebox/train/anomaly']
                     task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                            SAMPLE_NUM_PER_CLASS, )
                     task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -207,8 +194,8 @@ def main():
                     sample_images, sample_labels = next(sample_dataloader)
                     test_dataloader = iter(test_dataloader)
                     test_images, test_labels = next(test_dataloader)
-                    sample_features = gearbox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                    test_features = gearbox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                    sample_features = leftaxlebox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
+                    test_features = leftaxlebox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
                     sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1,
                                                                               1)
                     test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
@@ -217,53 +204,28 @@ def main():
                                                                                                  FEATURE_DIM * 4,
                                                                                                  28 * 28)
 
-                    relations1 = gearbox_relation_network(relation_pairs)
+                    relations1 = leftaxlebox_relation_network(relation_pairs)
                     relations1 = relations1.view(2, 8 * 512)
-                    relations1 = gearbox_relation_network_2(relations1)
+                    relations1 = leftaxlebox_relation_network_2(relations1)
                     relations = relations1.view(-1, CLASS_NUM)
                     # print(relations.shape)
-                    bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
 
                     # print(relations)
+                    # print(relations)
                     for j in range(len(relations)):
-                        if relations[j][0] > 0.9:
-                            bb[j] = 0
-                        else:
-                            bb[j] = 1
-                    predict_labels = bb.cpu()
-                    rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
-                    total_rewards += np.sum(rewards)
-                    if test_labels[0] == 1:
-                        recall_times = recall_times + 1
-                        recall_reward = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
-                        recall_rewards += np.sum(recall_reward)
-                accuracy = total_rewards / 1.0 / CLASS_NUM / TEST_EPISODE
-                recall = recall_rewards / 1.0 / CLASS_NUM / recall_times
+                        if test_labels[j]==1:
+                            relation_score_list[num_fault_type].append(relations[j][0].cpu().item())
+                        elif num_fault_type==2:
+                            relation_score_list[0].append(relations[j][0].cpu().item())
 
-                total_acc = total_acc + accuracy
-                total_recall = total_recall + recall
-                acc_for_std_list.append(accuracy)
-            print("FaultType:G", str(num_fault_type).ljust(2),
-                  "WorkCondition:", str(num_wc).ljust(2),
-                  "   Accuracy:", f"{total_acc / 10.0:.4f}".ljust(6),
-                  "   Recall:", f"{total_recall / 10.0:.4f}".rjust(10))
+        relation_score_list=pd.DataFrame(relation_score_list).T
+        file_path_rs = os.path.join('test_result', 'relation_scores','leftaxlebox', f'WC{num_wc}.csv')
+        # 保存为 CSV 文件
+        relation_score_list.to_csv(file_path_rs, index=False, header=False)
 
-            std_list[num_fault_type - 1][num_wc - 1] = np.std(acc_for_std_list)
-            accuracy_list[num_fault_type - 1][num_wc - 1] = total_acc / 10.0
-            recall_list[num_fault_type - 1][num_wc - 1] = total_recall / 10.0
-    return std_list, accuracy_list, recall_list
+
+    return 0
 
 
 if __name__ == '__main__':
-    std_data, acc_data, recall_data = main()
-    df_std = pd.DataFrame(std_data)
-    df_acc = pd.DataFrame(acc_data)
-    df_recall = pd.DataFrame(recall_data)
-    # 构建目标文件路径
-    file_path_std = os.path.join('test_result', 'gearbox', 'gearbox_std.csv')
-    file_path_acc = os.path.join('test_result', 'gearbox', 'gearbox_acc.csv')
-    file_path_recall = os.path.join('test_result', 'gearbox', 'gearbox_recall.csv')
-    # # 保存为 CSV 文件
-    # df_std.to_csv(file_path_std, index=False, header=False)
-    # df_acc.to_csv(file_path_acc, index=False, header=False)
-    # df_recall.to_csv(file_path_recall, index=False, header=False)
+    main()
