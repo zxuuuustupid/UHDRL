@@ -171,11 +171,11 @@ def main():
         print("load motor relation network2 success")
 
     # Step 3: build graph
-    for float_hb in range(-10, 10):
+    for float_hb in range(0, 10):
         with torch.no_grad():
             total_acc=0
             for ten_epoches in range(1, 11):
-                num_wc=4
+                num_wc=9
                 num_fault_type=1
                 total_rewards = 0
                 for i in range(TEST_EPISODE):
@@ -184,10 +184,10 @@ def main():
                     #                                f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
                     # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
                     #                                 '../CWT-1000/gearbox/train/anomaly']
-                    metatest_character_folders1 = [f'../CWT3-1000/gearbox/test/health/WC{num_wc}',
-                                                   f'../CWT3-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
-                    metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc}',
-                                                    '../CWT3-1000/gearbox/train/anomaly']
+                    metatest_character_folders1 = [f'../CWT3-1000/leftaxlebox/test/health/WC{num_wc}',
+                                                   f'../CWT3-1000/leftaxlebox/test/LA4/anomaly/WC{num_wc}']
+                    metatrain_character_folders1 = [f'../CWT3-1000/leftaxlebox/train/health/WC{num_wc}',
+                                                    '../CWT3-1000/leftaxlebox/train/anomaly']
                     task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                            SAMPLE_NUM_PER_CLASS, )
                     task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
@@ -200,8 +200,8 @@ def main():
                     sample_images, sample_labels = next(sample_dataloader)
                     test_dataloader = iter(test_dataloader)
                     test_images, test_labels = next(test_dataloader)
-                    sample_features = gearbox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                    test_features = gearbox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                    sample_features = leftaxlebox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
+                    test_features = leftaxlebox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
                     sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1,
                                                                               1)
                     test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
@@ -210,9 +210,9 @@ def main():
                                                                                                  FEATURE_DIM * 4,
                                                                                                  28 * 28)
 
-                    relations1 = gearbox_relation_network(relation_pairs)
+                    relations1 = leftaxlebox_relation_network(relation_pairs)
                     relations1 = relations1.view(2, 8 * 512)
-                    relations1 = gearbox_relation_network_2(relations1)
+                    relations1 = leftaxlebox_relation_network_2(relations1)
                     relations = relations1.view(-1, CLASS_NUM)
                     # print(relations.shape)
                     bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
@@ -232,15 +232,5 @@ def main():
 
 
 if __name__ == '__main__':
-    std_data, acc_data, recall_data = main()
-    df_std = pd.DataFrame(std_data)
-    df_acc = pd.DataFrame(acc_data)
-    df_recall = pd.DataFrame(recall_data)
-    # 构建目标文件路径
-    file_path_std = os.path.join('test_result', 'gearbox', 'gearbox_std.csv')
-    file_path_acc = os.path.join('test_result', 'gearbox', 'gearbox_acc.csv')
-    file_path_recall = os.path.join('test_result', 'gearbox', 'gearbox_recall.csv')
-    # # 保存为 CSV 文件
-    # df_std.to_csv(file_path_std, index=False, header=False)
-    # df_acc.to_csv(file_path_acc, index=False, header=False)
-    # df_recall.to_csv(file_path_recall, index=False, header=False)
+    main()
+
