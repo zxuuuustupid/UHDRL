@@ -191,7 +191,7 @@ def main():
         ########################################################################################
         feature_encoder.zero_grad()
         relation_network.zero_grad()
-        loss = loss_1
+        loss = loss_1 + loss_punish
         loss.backward()
         torch.nn.utils.clip_grad_norm(feature_encoder.parameters(), 0.5)
         torch.nn.utils.clip_grad_norm(relation_network.parameters(), 0.5)
@@ -206,7 +206,7 @@ def main():
             print("episode:", episode + 1, "loss", loss.item(), "TripletLoss", loss_punish)
             loos_result.append(loss)
 
-        if (episode + 1) % 25 == 0:
+        if (episode + 1) % 10 == 0:
             # test
 
             print("Testing")

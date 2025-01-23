@@ -184,6 +184,7 @@ def main():
                 recall_rewards = 0
                 recall_times = 0
                 for i in range(TEST_EPISODE):
+                    num_wc_mixed=random.randint(1,9)
                     degrees = random.choice([0, 90, 180, 270])
                     # metatest_character_folders1 = [f'../CWT-1000/leftaxlebox/test/health/WC{num_wc}',
                     #                                f'../CWT-1000/leftaxlebox/test/LA{num_fault_type}/anomaly/WC{num_wc}']
@@ -191,7 +192,7 @@ def main():
                     #                                 '../CWT-1000/leftaxlebox/train/anomaly']
                     metatest_character_folders1 = [f'../CWT3-1000/leftaxlebox/test/health/WC{num_wc}',
                                                    f'../CWT3-1000/leftaxlebox/test/LA{num_fault_type}/anomaly/WC{num_wc}']
-                    metatrain_character_folders1 = [f'../CWT3-1000/leftaxlebox/train/health/WC{num_wc}',
+                    metatrain_character_folders1 = [f'../CWT3-1000/leftaxlebox/train/health/WC{num_wc_mixed}',
                                                     '../CWT3-1000/leftaxlebox/train/anomaly']
                     task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                            SAMPLE_NUM_PER_CLASS, )
@@ -259,8 +260,8 @@ if __name__ == '__main__':
     df_recall = pd.DataFrame(recall_data)
     # 构建目标文件路径
     file_path_std = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_std.csv')
-    file_path_acc = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_acc.csv')
-    file_path_recall = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_recall.csv')
+    file_path_acc = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_acc_mixed.csv')
+    file_path_recall = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_recall_mixed.csv')
     # 保存为 CSV 文件
     df_std.to_csv(file_path_std, index=False, header=False)
     df_acc.to_csv(file_path_acc, index=False, header=False)
