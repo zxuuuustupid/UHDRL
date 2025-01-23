@@ -191,7 +191,7 @@ def main():
         ########################################################################################
         feature_encoder.zero_grad()
         relation_network.zero_grad()
-        loss = loss_1 + loss_punish
+        loss = loss_1
         loss.backward()
         torch.nn.utils.clip_grad_norm(feature_encoder.parameters(), 0.5)
         torch.nn.utils.clip_grad_norm(relation_network.parameters(), 0.5)
@@ -206,26 +206,23 @@ def main():
             print("episode:", episode + 1, "loss", loss.item(), "TripletLoss", loss_punish)
             loos_result.append(loss)
 
-        if (episode + 1) % 50 == 0:
+        if (episode + 1) % 25 == 0:
             # test
 
             print("Testing")
             accuracy22 = 0
             for num_train_wc in range(1, 6):
                 for num_train_fault_type in ['1-InnerScuffing', '2-InnerWear', '3-OuterScuffing', '4-OuterWearing',
-                                             '5-RollerWearing']:
+                                             '5-RollerWearing','6-Cage']:
+                    if num_train_wc==5 and num_train_fault_type=='6-Cage':
+                        continue
                     total_rewards_1_1 = 0
-                    if num_train_fault_type == '1-InnerScuffing' and num_train_wc == 5:
-                        continue
-                    if num_train_fault_type == '4-OuterWearing' and num_train_wc == 5:
-                        continue
-                    if num_train_fault_type == '5-RollerWearing' and num_train_wc == 4:
-                        continue
                     for i in range(TEST_EPISODE):
+                        num_train_wc_mixed=random.randint(1,5)
                         degrees = random.choice([0, 90, 180, 270])
                         metatest_character_folders1 = [f'../CWT-XJT/test/health/WC{num_train_wc}',
                                                        f'../CWT-XJT/test/anomaly/{num_train_fault_type}/WC{num_train_wc}']
-                        metatrain_character_folders1 = [f'../CWT-XJT/train/health/WC{num_train_wc}',
+                        metatrain_character_folders1 = [f'../CWT-XJT/train/health/WC{num_train_wc_mixed}',
                                                         f'../CWT-XJT/train/anomaly']
                         task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
                                                SAMPLE_NUM_PER_CLASS, )
@@ -271,7 +268,7 @@ def main():
                     accuray_result_1_1.append(test_accuracy)
                     # print(test_accuracy)
                     accuracy22 = accuracy22 + test_accuracy
-            print(" test accuracy:", accuracy22 / 22.0)
+            print(" test accuracy:", accuracy22 / 29.0)
             if accuracy22 >= last_accuracy:
                 # save networks
                 torch.save(feature_encoder.state_dict(),
@@ -293,5 +290,3 @@ def main():
 
 if __name__ == '__main__':
     loos_result_1 = main()
-    loos_result_1_cpu = [x_1.cpu().detach().numpy() for x_1 in loos_result_1]
-    np.savetxt(train_result + 'SWJTU_train_loss.csv', loos_result_1_cpu, fmt='%.8f', delimiter=',')

@@ -185,7 +185,7 @@ def main():
                 recall_rewards = 0
                 recall_times = 0
                 for i in range(TEST_EPISODE):
-                    print(i)
+
                     degrees = random.choice([0, 90, 180, 270])
                     # metatest_character_folders1 = [f'../CWT-1000/gearbox/test/health/WC{num_wc}',
                     #                                f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
@@ -259,8 +259,6 @@ if __name__ == '__main__':
     df_std = pd.DataFrame(std_data)
     df_acc = pd.DataFrame(acc_data)
     df_recall = pd.DataFrame(recall_data)
-    # 构建目标文件路径
-    file_path_std = os.path.join('test_result', 'gearbox', 'gearbox_std.csv')
     file_path_acc = os.path.join('test_result', 'gearbox', 'gearbox_acc.csv')
     file_path_recall = os.path.join('test_result', 'gearbox', 'gearbox_recall.csv')
     # # 保存为 CSV 文件
