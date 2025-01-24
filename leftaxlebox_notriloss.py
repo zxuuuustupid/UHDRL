@@ -33,7 +33,7 @@ parser.add_argument("-w", "--class_num", type=int, default=2)
 parser.add_argument("-s", "--sample_num_per_class", type=int, default=1)
 parser.add_argument("-b", "--batch_num_per_class", type=int, default=4)
 parser.add_argument("-e", "--episode", type=int, default=2000)
-parser.add_argument("-t", "--test_episode", type=int, default=50)
+parser.add_argument("-t", "--test_episode", type=int, default=10)
 parser.add_argument("-l", "--learning_rate", type=float, default=0.001)
 parser.add_argument("-g", "--gpu", type=int, default=0)
 parser.add_argument("-u", "--hidden_unit", type=int, default=10)
@@ -213,12 +213,11 @@ def main():
             print("episode:", episode + 1, "loss", loss.item(), "TripletLoss",loss_punish)
             loos_result.append(loss)
 
-        if (episode + 1) % 100 == 0:
+        if (episode + 1) % 200 == 0:
             # test
 
             print("Testing")
             accuracy72=0
-            acc_list=[[0]*9 for _ in range(4)]
             for num_train_wc in range(1,10):
                 for num_train_fault_type in range(1,5):
                     total_rewards_1_1 = 0
@@ -277,21 +276,20 @@ def main():
                     test_accuracy = total_rewards_1_1 / 1.0 / CLASS_NUM / TEST_EPISODE
                     accuray_result_1_1.append(test_accuracy)
                     accuracy72=accuracy72+test_accuracy
-                    acc_list[num_train_fault_type-1][num_train_wc-1]=test_accuracy
             print(" test accuracy:", accuracy72/36.0)
             if accuracy72 >= last_accuracy:
                 # save networks
-                # torch.save(feature_encoder.state_dict(),
-                #            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                #                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                # torch.save(relation_network.state_dict(),
-                #            str("./models/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                #                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                # torch.save(kan.state_dict(),
-                #            str("./models/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                #                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                acc_list=np.array(acc_list)
-                np.savetxt(train_result + 'ablation/' + 'leftaxlebox_notriloss.csv', acc_list, fmt='%.8f', delimiter=',')
+                torch.save(feature_encoder.state_dict(),
+                           str("./models1/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+                torch.save(relation_network.state_dict(),
+                           str("./models1/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+                torch.save(kan.state_dict(),
+                           str("./models1/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+
+                print("save networks for episode:", episode)
 
                 last_accuracy = accuracy72
 

@@ -106,67 +106,67 @@ def main():
     motor_relation_network_2.cuda(GPU)
 
     if os.path.exists(
-            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         gearbox_feature_encoder.load_state_dict(torch.load(
-            str("./models/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/gearbox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load gearbox feature encoder success")
     if os.path.exists(
-            str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         gearbox_relation_network.load_state_dict(torch.load(
-            str("./models/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/gearbox_relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load gearbox relation network success")
     if os.path.exists(
-            str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         gearbox_relation_network_2.load_state_dict(torch.load(
-            str("./models/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/gearbox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load gearbox relation network2 success")
     if os.path.exists(
-            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         leftaxlebox_feature_encoder.load_state_dict(torch.load(
-            str("./models/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/leftaxlebox_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load leftaxlebox feature encoder success")
     if os.path.exists(
-            str("./models/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         leftaxlebox_relation_network.load_state_dict(torch.load(
-            str("./models/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/leftaxlebox_relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load leftaxlebox relation network success")
     if os.path.exists(
-            str("./models/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         leftaxlebox_relation_network_2.load_state_dict(torch.load(
-            str("./models/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/leftaxlebox_relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load leftaxlebox relation network2 success")
 
     if os.path.exists(
-            str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         motor_feature_encoder.load_state_dict(torch.load(
-            str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load motor feature encoder success")
     if os.path.exists(
-            str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         motor_relation_network.load_state_dict(torch.load(
-            str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load motor relation network success")
     if os.path.exists(
-            str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")):
         motor_relation_network_2.load_state_dict(torch.load(
-            str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+            str("./models1/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
                 SAMPLE_NUM_PER_CLASS) + "shot.pkl")))
         print("load motor relation network2 success")
 
@@ -259,10 +259,8 @@ if __name__ == '__main__':
     df_acc = pd.DataFrame(acc_data)
     df_recall = pd.DataFrame(recall_data)
     # 构建目标文件路径
-    file_path_std = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_std.csv')
-    file_path_acc = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_acc_mixed.csv')
-    file_path_recall = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_recall_mixed.csv')
+    file_path_acc = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_acc_mixed_notriloss.csv')
+    file_path_recall = os.path.join('test_result', 'leftaxlebox', 'leftaxlebox_recall_mixed_notriloss.csv')
     # 保存为 CSV 文件
-    df_std.to_csv(file_path_std, index=False, header=False)
     df_acc.to_csv(file_path_acc, index=False, header=False)
     df_recall.to_csv(file_path_recall, index=False, header=False)

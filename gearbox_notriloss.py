@@ -213,7 +213,7 @@ def main():
             print("episode:", episode + 1, "loss", loss.item(), "TripletLoss",loss_punish)
             loos_result.append(loss)
 
-        if (episode + 1) % 100 == 0:
+        if (episode + 1) % 00 == 0:
             # test
 
             print("Testing")
