@@ -171,85 +171,97 @@ def main():
         print("load motor relation network2 success")
 
     # Step 3: build graph
-    accuracy_list = [[0] * 9 for _ in range(2)]
-    recall_list = [[0] * 9 for _ in range(2)]
-    for num_wc in range(1, 9 + 1):
-        health_acc = 0
-        total_recall = 0
-        for ten_epoches in range(1, 11):
-            recall_rewards = 0
-            health_rewards = 0
-            health_times=0
-            recall_times = 0
-            for i in range(TEST_EPISODE):
-                num_fault_type_mixed=random.randint(1,8)
-                num_wc_mixed=random.randint(1,9)
-                degrees = random.choice([0, 90, 180, 270])
-                # metatest_character_folders1 = [f'../CWT-1000/gearbox/test/health/WC{num_wc}',
-                #                                f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
-                # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
-                #                                 '../CWT-1000/gearbox/train/anomaly']
-                metatest_character_folders1 = [f'../CWT3-1000/gearbox/test/health/WC{num_wc}',
-                                               f'../CWT3-1000/gearbox/test/G{num_fault_type_mixed}/anomaly/WC{num_wc}']
-                metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc_mixed}',
-                                                '../CWT3-1000/gearbox/train/anomaly']
-                task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-                                       SAMPLE_NUM_PER_CLASS, )
-                task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
-                                        BATCH_NUM_PER_CLASS)
-                sample_dataloader = tg.get_data_loader(task1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
-                                                       shuffle=False, rotation=degrees)
-                test_dataloader = tg.get_data_loader(task, num_per_class=SAMPLE_NUM_PER_CLASS, split="test",
-                                                     shuffle=True, rotation=degrees)
-                sample_dataloader = iter(sample_dataloader)
-                sample_images, sample_labels = next(sample_dataloader)
-                test_dataloader = iter(test_dataloader)
-                test_images, test_labels = next(test_dataloader)
-                sample_features = gearbox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
-                test_features = gearbox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
-                sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1,
-                                                                          1)
-                test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
-                test_features_ext = torch.transpose(test_features_ext, 0, 1)
-                relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
-                                                                                             FEATURE_DIM * 4,
-                                                                                             28 * 28)
+    accuracy_list = [[0] * 9 for _ in range(8)]
+    recall_list = [[0] * 9 for _ in range(8)]
+    std_list = [[0] * 9 for _ in range(8)]
+    for num_fault_type in range(1, 8 + 1):
+        for num_wc in range(1, 9 + 1):
+            total_acc = 0
+            total_recall = 0
+            acc_for_std_list = []
+            for ten_epoches in range(1, 11):
 
-                relations1 = gearbox_relation_network(relation_pairs)
-                relations1 = relations1.view(2, 8 * 512)
-                relations1 = gearbox_relation_network_2(relations1)
-                relations = relations1.view(-1, CLASS_NUM)
-                # print(relations.shape)
-                bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
+                total_rewards = 0
+                recall_rewards = 0
+                recall_times = 0
+                for i in range(TEST_EPISODE):
+                    num_wc_mixed = random.randint(1, 9)
+                    degrees = random.choice([0, 90, 180, 270])
+                    # metatest_character_folders1 = [f'../CWT-1000/gearbox/test/health/WC{num_wc}',
+                    #                                f'../CWT-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
+                    # metatrain_character_folders1 = [f'../CWT-1000/gearbox/train/health/WC{num_wc}',
+                    #                                 '../CWT-1000/gearbox/train/anomaly']
+                    metatest_character_folders1 = [f'../CWT3-1000/gearbox/test/health/WC{num_wc}',
+                                                   f'../CWT3-1000/gearbox/test/G{num_fault_type}/anomaly/WC{num_wc}']
+                    metatrain_character_folders1 = [f'../CWT3-1000/gearbox/train/health/WC{num_wc_mixed}',
+                                                    '../CWT3-1000/gearbox/train/anomaly']
+                    task = tg.OmniglotTask(metatest_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
+                                           SAMPLE_NUM_PER_CLASS, )
+                    task1 = tg.OmniglotTask(metatrain_character_folders1, CLASS_NUM, SAMPLE_NUM_PER_CLASS,
+                                            BATCH_NUM_PER_CLASS)
+                    sample_dataloader = tg.get_data_loader(task1, num_per_class=SAMPLE_NUM_PER_CLASS, split="train",
+                                                           shuffle=False, rotation=degrees)
+                    test_dataloader = tg.get_data_loader(task, num_per_class=SAMPLE_NUM_PER_CLASS, split="test",
+                                                         shuffle=True, rotation=degrees)
+                    sample_dataloader = iter(sample_dataloader)
+                    sample_images, sample_labels = next(sample_dataloader)
+                    test_dataloader = iter(test_dataloader)
+                    test_images, test_labels = next(test_dataloader)
+                    sample_features = gearbox_feature_encoder(Variable(sample_images).cuda(GPU))  # 5x64
+                    test_features = gearbox_feature_encoder(Variable(test_images).cuda(GPU))  # 20x64
+                    sample_features_ext = sample_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1,
+                                                                              1)
+                    test_features_ext = test_features.unsqueeze(0).repeat(SAMPLE_NUM_PER_CLASS * CLASS_NUM, 1, 1, 1, 1)
+                    test_features_ext = torch.transpose(test_features_ext, 0, 1)
+                    relation_pairs = torch.cat((sample_features_ext, test_features_ext), 2).view(-1,
+                                                                                                 FEATURE_DIM * 4,
+                                                                                                 28 * 28)
 
-                # print(relations)
-                for j in range(len(relations)):
-                    if relations[j][0] > 0.9:
-                        bb[j] = 0
-                    else:
-                        bb[j] = 1
-                predict_labels = bb.cpu()
-                if test_labels[0] == 0:
-                    health_times = health_times + 1
-                    health_reward = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
-                    health_rewards += np.sum(health_reward)
-                if test_labels[0] == 1:
-                    recall_times = recall_times + 1
-                    recall_reward = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
-                    recall_rewards += np.sum(recall_reward)
-            accuracy_health = health_rewards / 1.0 / CLASS_NUM / health_times
-            recall = recall_rewards / 1.0 / CLASS_NUM / recall_times
+                    relations1 = gearbox_relation_network(relation_pairs)
+                    relations1 = relations1.view(2, 8 * 512)
+                    relations1 = gearbox_relation_network_2(relations1)
+                    relations = relations1.view(-1, CLASS_NUM)
+                    # print(relations.shape)
+                    bb = Variable(torch.zeros(CLASS_NUM)).cuda(GPU)
 
-            health_acc = health_acc + accuracy_health
-            total_recall = total_recall + recall
-        accuracy_list[0][num_wc - 1] = health_acc / 10.0
-        accuracy_list[1][num_wc - 1] = total_recall / 10.0
-        print(accuracy_list)
-    return accuracy_list
+                    # print(relations)
+                    for j in range(len(relations)):
+                        if relations[j][0] > 0.9:
+                            bb[j] = 0
+                        else:
+                            bb[j] = 1
+                    predict_labels = bb.cpu()
+                    rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
+                    total_rewards += np.sum(rewards)
+                    if test_labels[0] == 1:
+                        recall_times = recall_times + 1
+                        recall_reward = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(CLASS_NUM)]
+                        recall_rewards += np.sum(recall_reward)
+                accuracy = total_rewards / 1.0 / CLASS_NUM / TEST_EPISODE
+                recall = recall_rewards / 1.0 / CLASS_NUM / recall_times
+
+                total_acc = total_acc + accuracy
+                total_recall = total_recall + recall
+                acc_for_std_list.append(accuracy)
+            print("FaultType:G", str(num_fault_type).ljust(2),
+                  "WorkCondition:", str(num_wc).ljust(2),
+                  "   Accuracy:", f"{total_acc / 10.0:.4f}".ljust(6),
+                  "   Recall:", f"{total_recall / 10.0:.4f}".rjust(10))
+
+            std_list[num_fault_type - 1][num_wc - 1] = np.std(acc_for_std_list)
+            accuracy_list[num_fault_type - 1][num_wc - 1] = total_acc / 10.0
+            recall_list[num_fault_type - 1][num_wc - 1] = total_recall / 10.0
+    return std_list, accuracy_list, recall_list
 
 
 if __name__ == '__main__':
-    acc_data= main()
+    std_data, acc_data, recall_data = main()
+    df_std = pd.DataFrame(std_data)
     df_acc = pd.DataFrame(acc_data)
-    file_path_acc = os.path.join('test_result', 'gearbox', 'mixed_wcs','gearbox_health_acc_notriloss.csv')
+    df_recall = pd.DataFrame(recall_data)
+    file_path_acc = os.path.join('test_result', 'gearbox', 'gearbox_acc_mixed_notirloss.csv')
+    file_path_recall = os.path.join('test_result', 'gearbox', 'gearbox_recall_mixed.csv')
+    # # 保存为 CSV 文件
+    # df_std.to_csv(file_path_std, index=False, header=False)
     df_acc.to_csv(file_path_acc, index=False, header=False)
+    df_recall.to_csv(file_path_recall, index=False, header=False)

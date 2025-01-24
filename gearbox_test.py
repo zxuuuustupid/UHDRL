@@ -263,5 +263,5 @@ if __name__ == '__main__':
     file_path_recall = os.path.join('test_result', 'gearbox', 'gearbox_recall_mixed.csv')
     # # 保存为 CSV 文件
     # df_std.to_csv(file_path_std, index=False, header=False)
-    # df_acc.to_csv(file_path_acc, index=False, header=False)
-    # df_recall.to_csv(file_path_recall, index=False, header=False)
+    df_acc.to_csv(file_path_acc, index=False, header=False)
+    df_recall.to_csv(file_path_recall, index=False, header=False)

@@ -33,7 +33,7 @@ parser.add_argument("-w", "--class_num", type=int, default=2)
 parser.add_argument("-s", "--sample_num_per_class", type=int, default=1)
 parser.add_argument("-b", "--batch_num_per_class", type=int, default=4)
 parser.add_argument("-e", "--episode", type=int, default=2000)
-parser.add_argument("-t", "--test_episode", type=int, default=100)
+parser.add_argument("-t", "--test_episode", type=int, default=10)
 parser.add_argument("-l", "--learning_rate", type=float, default=0.001)
 parser.add_argument("-g", "--gpu", type=int, default=0)
 parser.add_argument("-u", "--hidden_unit", type=int, default=10)
@@ -213,7 +213,7 @@ def main():
             print("episode:", episode + 1, "loss", loss.item(), "TripletLoss",loss_punish)
             loos_result.append(loss)
 
-        if (episode + 1) % 100 == 0:
+        if (episode + 1) % 200 == 0:
             # test
 
             print("Testing")
@@ -280,22 +280,18 @@ def main():
                     acc_list[num_train_fault_type - 1][num_train_wc - 1] = test_accuracy
             print(" test accuracy:", accuracy72/36.0)
             if accuracy72 >= last_accuracy:
-                # # save networks
-                # torch.save(feature_encoder.state_dict(),
-                #            str("./models/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
-                #                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                # torch.save(relation_network.state_dict(),
-                #            str("./models/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
-                #                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                # torch.save(kan.state_dict(),
-                #            str("./models/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
-                #                SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
-                #
-                # print("save networks for episode:", episode)
-                acc_list = np.array(acc_list)
-                np.savetxt(train_result + 'ablation/' + 'motor_notriloss.csv', acc_list, fmt='%.8f',
-                           delimiter=',')
+                # save networks
+                torch.save(feature_encoder.state_dict(),
+                           str("./models1/motor_feature_encoder_" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+                torch.save(relation_network.state_dict(),
+                           str("./models1/motor_relation_network_" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
+                torch.save(kan.state_dict(),
+                           str("./models1/motor_relation_network_2" + str(CLASS_NUM) + "way_" + str(
+                               SAMPLE_NUM_PER_CLASS) + "shot.pkl"))
 
+                print("save networks for episode:", episode)
                 last_accuracy = accuracy72
 
     return loos_result_1
